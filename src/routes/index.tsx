@@ -43,7 +43,7 @@ function RouteComponent() {
     <>
       <Header title="Home" subtitle="Workout Tracker" />
 
-      <div className="space-y-4 pt-25">
+      <div className="space-y-4 pt-[80px]">
         <div className="space-y-2 p-4 py-0">
           <p>Weekly Progress</p>
           <Card>

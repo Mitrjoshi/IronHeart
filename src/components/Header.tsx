@@ -23,7 +23,7 @@ export function Header({
   return (
     <div
       className={cn(
-        "flex items-center p-4 justify-between border-b fixed top-0 left-0 right-0 bg-background z-10",
+        "flex items-center p-4 py-2 justify-between border-b fixed top-0 left-0 right-0 bg-background z-10",
         className,
       )}
     >
@@ -39,9 +39,9 @@ export function Header({
         )}
 
         <div className="flex flex-col min-w-0">
-          {title && <div className="text-3xl font-bold truncate">{title}</div>}
+          {title && <div className="text-2xl font-bold truncate">{title}</div>}
           {subtitle && (
-            <div className="text-sm text-muted-foreground truncate">
+            <div className="text-xs text-muted-foreground truncate">
               {subtitle}
             </div>
           )}
