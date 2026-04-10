@@ -8,6 +8,12 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js");
+    });
+  }
+
   return (
     <React.Fragment>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
