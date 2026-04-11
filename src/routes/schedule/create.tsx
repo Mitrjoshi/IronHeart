@@ -1,15 +1,21 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import React from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  // DropdownMenuLabel,
+  // DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+// import { Label } from "radix-ui";
+import { addSchedule } from "@/store/query/schedule";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/schedule/create")({
   component: RouteComponent,
@@ -17,7 +23,23 @@ export const Route = createFileRoute("/schedule/create")({
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
-  const router = useRouter();
+
+  const [scheduleName, setScheduleName] = React.useState("");
+  const [scheduleDay, setScheduleDay] = React.useState("");
+
+  const handleCreateSchedule = () => {
+    if (!scheduleName || !scheduleDay) {
+      toast("Please enter a name and select a day for your workout.");
+      return;
+    }
+
+    const scheduleId = addSchedule(scheduleName, scheduleDay);
+    navigate({
+      to: "/schedule/$id",
+      params: { id: scheduleId },
+      replace: true,
+    });
+  };
 
   return (
     <>
@@ -27,41 +49,55 @@ function RouteComponent() {
         <div className="space-y-2 p-4 py-0">
           <div className="flex flex-col space-y-2">
             <Card>
-              <CardHeader className="flex items-center justify-between">
-                <div className="w-full">
-                  <Input className="w-full" placeholder="Workout Name" />
-                </div>
-              </CardHeader>
+              <CardContent className="space-y-2">
+                <Input
+                  onChange={(e) => setScheduleName(e.target.value)}
+                  className="h-[36px] w-full"
+                  placeholder="Workout Name"
+                />
 
-              <Separator />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="w-full" size="lg" variant="outline">
+                      {scheduleDay ? scheduleDay : "Select Day of the Week"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuGroup>
+                      {[
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                        "Sunday",
+                      ].map((day) => (
+                        <DropdownMenuItem
+                          key={day}
+                          onClick={() => setScheduleDay(day)}
+                        >
+                          {day}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              <CardContent>
-                <Button
-                  onClick={() => {
-                    navigate({
-                      to: "/schedule/$id/excercise",
-                      params: {
-                        id: "chest",
-                      },
-                    });
-                  }}
-                  variant={"outline"}
-                  className="w-full cursor-pointer"
-                  size="lg"
-                >
-                  <Plus />
-                  <p>Add Exercise</p>
-                </Button>
+                <p className="text-muted-foreground text-sm">
+                  Select day of the week for this workout. This will help you
+                  organize your workouts and track your progress over time. You
+                  can always change
+                </p>
               </CardContent>
+
               <CardFooter className="flex-col space-y-2">
                 <Button
-                  onClick={() => {
-                    router.history.back();
-                  }}
+                  onClick={handleCreateSchedule}
                   className="w-full cursor-pointer"
                   size="lg"
                 >
-                  <p>Save</p>
+                  <p>Create & Add Exercise</p>
                 </Button>
               </CardFooter>
             </Card>

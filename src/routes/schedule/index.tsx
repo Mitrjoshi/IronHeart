@@ -1,13 +1,13 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+// import {
+//   Card,
+//   CardDescription,
+//   CardFooter,
+//   CardHeader,
+// } from "@/components/ui/card";
 import { createFileRoute } from "@tanstack/react-router";
-import { Pen, Play, Plus, Timer } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/schedule/")({
   component: RouteComponent,
@@ -22,9 +22,8 @@ function RouteComponent() {
 
       <div className="space-y-4 pt-20 pb-18">
         <div className="space-y-2 p-4 py-0">
-          <p>Workout Schedule</p>
           <div className="flex flex-col space-y-2">
-            {[
+            {/* {[
               "Monday - Chest",
               "Tuesday - Back",
               "Wednesday - Legs",
@@ -78,7 +77,7 @@ function RouteComponent() {
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            ))} */}
           </div>
         </div>
 
@@ -88,10 +87,10 @@ function RouteComponent() {
               to: "/schedule/create",
             });
           }}
-          className="fixed right-4 bottom-4 z-10 size-12 cursor-pointer rounded-full shadow-2xl shadow-black"
+          className="fixed right-4 bottom-4 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"
           size="icon-lg"
         >
-          <Plus className="size-6" />
+          <Plus className="size-10" />
         </Button>
       </div>
     </>

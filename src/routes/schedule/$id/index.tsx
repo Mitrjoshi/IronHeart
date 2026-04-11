@@ -1,15 +1,16 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { createFileRoute } from "@tanstack/react-router";
-import { Minus, Play, Plus } from "lucide-react";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardFooter,
+//   CardHeader,
+// } from "@/components/ui/card";
+// import { Input } from "@/components/ui/input";
+import { useDeleteSchedule, useScheduleById } from "@/hooks/store";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Play, Plus, Trash } from "lucide-react";
 
 export const Route = createFileRoute("/schedule/$id/")({
   component: RouteComponent,
@@ -17,25 +18,44 @@ export const Route = createFileRoute("/schedule/$id/")({
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
+  const router = useRouter();
+
+  const scheduleId = Route.useParams().id;
+  const scheduleData = useScheduleById(scheduleId);
+
+  const deleteSchedule = useDeleteSchedule();
 
   return (
     <>
       <Header
         right={
-          <Button>
-            <Play size={16} />
-            <p>Start</p>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button>
+              <Play size={16} />
+              <p>Start</p>
+            </Button>
+
+            <Button
+              onClick={() => {
+                deleteSchedule(scheduleId);
+                router.history.back();
+              }}
+              variant="destructive"
+              size="icon"
+            >
+              <Trash size={16} />
+            </Button>
+          </div>
         }
         showBack
-        title="Chest"
+        title={scheduleData?.name}
         subtitle="Workout Tracker"
       />
 
       <div className="space-y-4 pt-20 pb-18">
         <div className="space-y-2 p-4 py-0">
           <div className="flex flex-col space-y-2">
-            {[
+            {/* {[
               "Barbell Bench Press",
               "Incline Dumbbell Press",
               "Cable Flyes",
@@ -88,7 +108,7 @@ function RouteComponent() {
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            ))} */}
           </div>
         </div>
 
