@@ -8,33 +8,11 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
-
-// import {
-// ChartContainer,
-// ChartTooltip,
-// ChartTooltipContent,
-//  type ChartConfig,
-// } from "@/components/ui/chart";
-// import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { Separator } from "@/components/ui/separator";
-import { useAllSchedules, useSchedulesToday } from "@/hooks/store";
+import { useAllSchedules, useSchedulesToday } from "@/hooks/store/schedules";
 import { capitalize } from "@/utils";
+import { WeeklyGraph } from "@/components/WeeklyGraph";
 export const description = "A bar chart";
-// const chartData = [
-//   { month: "January", desktop: 186 },
-//   { month: "February", desktop: 305 },
-//   { month: "March", desktop: 237 },
-//   { month: "April", desktop: 73 },
-//   { month: "May", desktop: 209 },
-//   { month: "June", desktop: 214 },
-// ];
-// const chartConfig = {
-//   desktop: {
-//     label: "Desktop",
-//     color: "var(--chart-1)",
-//   },
-// } satisfies ChartConfig;
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -55,37 +33,13 @@ function RouteComponent() {
           <p className="text-muted-foreground">Weekly Progress</p>
           <Card>
             <CardContent>
-              {/* <ChartContainer className="outline-none!" config={chartConfig}>
-                <BarChart
-                  className="outline-none!"
-                  accessibilityLayer
-                  data={chartData}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Bar
-                    dataKey="desktop"
-                    fill="var(--color-desktop)"
-                    radius={8}
-                  />
-                </BarChart>
-              </ChartContainer> */}
+              <WeeklyGraph />
 
-              <p className="text-muted-foreground text-center">
+              {/* <p className="text-muted-foreground text-center">
                 Track your weekly progress to see how you're progressing towards
                 your fitness goals. Check your workout history, see how many
                 workouts you've completed, and track your progress over time.
-              </p>
+              </p> */}
             </CardContent>
           </Card>
         </div>
@@ -112,9 +66,9 @@ function RouteComponent() {
                   <Button
                     onClick={() => {
                       navigate({
-                        to: "/schedule/$id/start",
+                        to: "/schedule/$scheduleId/start",
                         params: {
-                          id: todaySchedules[0].id,
+                          scheduleId: todaySchedules[0].id,
                         },
                       });
                     }}
@@ -154,32 +108,22 @@ function RouteComponent() {
             {schedules.map((split) => (
               <Link
                 key={split.id}
-                to="/schedule/$id"
+                to="/schedule/$scheduleId"
                 className="cursor-pointer"
-                params={{ id: split.id }}
+                params={{ scheduleId: split.id }}
               >
                 <Card>
-                  <CardContent className="flex items-center justify-between">
-                    <p>
-                      {capitalize(split.day)} - {split.name}
-                    </p>
-
-                    <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate({
-                          to: "/schedule/$id/start",
-                          params: {
-                            id: split.id,
-                          },
-                        });
-                      }}
-                      size="icon-sm"
-                      className="rounded-full"
-                    >
-                      <Play fill="black" />
-                    </Button>
-                  </CardContent>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <p>
+                        {capitalize(split.day)} - {split.name}
+                      </p>
+                      <p className="text-muted-foreground">
+                        ({split.estimatedMinutes} mins)
+                      </p>
+                    </div>
+                    <CardDescription>{split.exercises}</CardDescription>
+                  </CardHeader>
                 </Card>
               </Link>
             ))}

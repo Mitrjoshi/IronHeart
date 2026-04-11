@@ -1,4 +1,3 @@
-// store/scheduleStore.ts
 import { createStore } from "tinybase";
 import { createLocalPersister } from "tinybase/persisters/persister-browser";
 
@@ -9,6 +8,17 @@ store.setTablesSchema({
     name: { type: "string" },
     day: { type: "string" },
     createdAt: { type: "number" },
+  },
+  exercises: {
+    name: { type: "string" },
+    scheduleId: { type: "string" },
+    createdAt: { type: "number" },
+  },
+  sets: {
+    exerciseId: { type: "string" },
+    reps: { type: "number" },
+    weight: { type: "number" },
+    order: { type: "number" },
   },
 });
 

@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 // import { Label } from "radix-ui";
-import { addSchedule } from "@/store/query/schedule";
 import { toast } from "sonner";
+import { useAddSchedule } from "@/hooks/store/schedules";
 
 export const Route = createFileRoute("/schedule/create")({
   component: RouteComponent,
@@ -27,6 +27,8 @@ function RouteComponent() {
   const [scheduleName, setScheduleName] = React.useState("");
   const [scheduleDay, setScheduleDay] = React.useState("");
 
+  const addSchedule = useAddSchedule();
+
   const handleCreateSchedule = () => {
     if (!scheduleName || !scheduleDay) {
       toast("Please enter a name and select a day for your workout.");
@@ -35,8 +37,8 @@ function RouteComponent() {
 
     const scheduleId = addSchedule(scheduleName, scheduleDay);
     navigate({
-      to: "/schedule/$id",
-      params: { id: scheduleId },
+      to: "/schedule/$scheduleId",
+      params: { scheduleId: scheduleId },
       replace: true,
     });
   };

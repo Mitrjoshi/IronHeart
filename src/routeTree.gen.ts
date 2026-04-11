@@ -12,9 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ScheduleIndexRouteImport } from './routes/schedule/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
-import { Route as ScheduleIdIndexRouteImport } from './routes/schedule/$id/index'
-import { Route as ScheduleIdStartRouteImport } from './routes/schedule/$id/start'
-import { Route as ScheduleIdExcerciseRouteImport } from './routes/schedule/$id/excercise'
+import { Route as ScheduleScheduleIdIndexRouteImport } from './routes/schedule/$scheduleId/index'
+import { Route as ScheduleScheduleIdStartRouteImport } from './routes/schedule/$scheduleId/start'
+import { Route as ScheduleScheduleIdExcerciseIndexRouteImport } from './routes/schedule/$scheduleId/excercise/index'
+import { Route as ScheduleScheduleIdExcerciseExcerciseIdRouteImport } from './routes/schedule/$scheduleId/excercise/$excerciseId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,46 +32,56 @@ const ScheduleCreateRoute = ScheduleCreateRouteImport.update({
   path: '/schedule/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ScheduleIdIndexRoute = ScheduleIdIndexRouteImport.update({
-  id: '/schedule/$id/',
-  path: '/schedule/$id/',
+const ScheduleScheduleIdIndexRoute = ScheduleScheduleIdIndexRouteImport.update({
+  id: '/schedule/$scheduleId/',
+  path: '/schedule/$scheduleId/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ScheduleIdStartRoute = ScheduleIdStartRouteImport.update({
-  id: '/schedule/$id/start',
-  path: '/schedule/$id/start',
+const ScheduleScheduleIdStartRoute = ScheduleScheduleIdStartRouteImport.update({
+  id: '/schedule/$scheduleId/start',
+  path: '/schedule/$scheduleId/start',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ScheduleIdExcerciseRoute = ScheduleIdExcerciseRouteImport.update({
-  id: '/schedule/$id/excercise',
-  path: '/schedule/$id/excercise',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const ScheduleScheduleIdExcerciseIndexRoute =
+  ScheduleScheduleIdExcerciseIndexRouteImport.update({
+    id: '/schedule/$scheduleId/excercise/',
+    path: '/schedule/$scheduleId/excercise/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ScheduleScheduleIdExcerciseExcerciseIdRoute =
+  ScheduleScheduleIdExcerciseExcerciseIdRouteImport.update({
+    id: '/schedule/$scheduleId/excercise/$excerciseId',
+    path: '/schedule/$scheduleId/excercise/$excerciseId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
-  '/schedule/$id/excercise': typeof ScheduleIdExcerciseRoute
-  '/schedule/$id/start': typeof ScheduleIdStartRoute
-  '/schedule/$id/': typeof ScheduleIdIndexRoute
+  '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
+  '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
+  '/schedule/$scheduleId/excercise/': typeof ScheduleScheduleIdExcerciseIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule': typeof ScheduleIndexRoute
-  '/schedule/$id/excercise': typeof ScheduleIdExcerciseRoute
-  '/schedule/$id/start': typeof ScheduleIdStartRoute
-  '/schedule/$id': typeof ScheduleIdIndexRoute
+  '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId': typeof ScheduleScheduleIdIndexRoute
+  '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
+  '/schedule/$scheduleId/excercise': typeof ScheduleScheduleIdExcerciseIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
-  '/schedule/$id/excercise': typeof ScheduleIdExcerciseRoute
-  '/schedule/$id/start': typeof ScheduleIdStartRoute
-  '/schedule/$id/': typeof ScheduleIdIndexRoute
+  '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
+  '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
+  '/schedule/$scheduleId/excercise/': typeof ScheduleScheduleIdExcerciseIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,34 +89,38 @@ export interface FileRouteTypes {
     | '/'
     | '/schedule/create'
     | '/schedule/'
-    | '/schedule/$id/excercise'
-    | '/schedule/$id/start'
-    | '/schedule/$id/'
+    | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId/'
+    | '/schedule/$scheduleId/excercise/$excerciseId'
+    | '/schedule/$scheduleId/excercise/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/schedule/create'
     | '/schedule'
-    | '/schedule/$id/excercise'
-    | '/schedule/$id/start'
-    | '/schedule/$id'
+    | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId'
+    | '/schedule/$scheduleId/excercise/$excerciseId'
+    | '/schedule/$scheduleId/excercise'
   id:
     | '__root__'
     | '/'
     | '/schedule/create'
     | '/schedule/'
-    | '/schedule/$id/excercise'
-    | '/schedule/$id/start'
-    | '/schedule/$id/'
+    | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId/'
+    | '/schedule/$scheduleId/excercise/$excerciseId'
+    | '/schedule/$scheduleId/excercise/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   ScheduleIndexRoute: typeof ScheduleIndexRoute
-  ScheduleIdExcerciseRoute: typeof ScheduleIdExcerciseRoute
-  ScheduleIdStartRoute: typeof ScheduleIdStartRoute
-  ScheduleIdIndexRoute: typeof ScheduleIdIndexRoute
+  ScheduleScheduleIdStartRoute: typeof ScheduleScheduleIdStartRoute
+  ScheduleScheduleIdIndexRoute: typeof ScheduleScheduleIdIndexRoute
+  ScheduleScheduleIdExcerciseExcerciseIdRoute: typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
+  ScheduleScheduleIdExcerciseIndexRoute: typeof ScheduleScheduleIdExcerciseIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -131,25 +146,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScheduleCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedule/$id/': {
-      id: '/schedule/$id/'
-      path: '/schedule/$id'
-      fullPath: '/schedule/$id/'
-      preLoaderRoute: typeof ScheduleIdIndexRouteImport
+    '/schedule/$scheduleId/': {
+      id: '/schedule/$scheduleId/'
+      path: '/schedule/$scheduleId'
+      fullPath: '/schedule/$scheduleId/'
+      preLoaderRoute: typeof ScheduleScheduleIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedule/$id/start': {
-      id: '/schedule/$id/start'
-      path: '/schedule/$id/start'
-      fullPath: '/schedule/$id/start'
-      preLoaderRoute: typeof ScheduleIdStartRouteImport
+    '/schedule/$scheduleId/start': {
+      id: '/schedule/$scheduleId/start'
+      path: '/schedule/$scheduleId/start'
+      fullPath: '/schedule/$scheduleId/start'
+      preLoaderRoute: typeof ScheduleScheduleIdStartRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedule/$id/excercise': {
-      id: '/schedule/$id/excercise'
-      path: '/schedule/$id/excercise'
-      fullPath: '/schedule/$id/excercise'
-      preLoaderRoute: typeof ScheduleIdExcerciseRouteImport
+    '/schedule/$scheduleId/excercise/': {
+      id: '/schedule/$scheduleId/excercise/'
+      path: '/schedule/$scheduleId/excercise'
+      fullPath: '/schedule/$scheduleId/excercise/'
+      preLoaderRoute: typeof ScheduleScheduleIdExcerciseIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedule/$scheduleId/excercise/$excerciseId': {
+      id: '/schedule/$scheduleId/excercise/$excerciseId'
+      path: '/schedule/$scheduleId/excercise/$excerciseId'
+      fullPath: '/schedule/$scheduleId/excercise/$excerciseId'
+      preLoaderRoute: typeof ScheduleScheduleIdExcerciseExcerciseIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -159,9 +181,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   ScheduleIndexRoute: ScheduleIndexRoute,
-  ScheduleIdExcerciseRoute: ScheduleIdExcerciseRoute,
-  ScheduleIdStartRoute: ScheduleIdStartRoute,
-  ScheduleIdIndexRoute: ScheduleIdIndexRoute,
+  ScheduleScheduleIdStartRoute: ScheduleScheduleIdStartRoute,
+  ScheduleScheduleIdIndexRoute: ScheduleScheduleIdIndexRoute,
+  ScheduleScheduleIdExcerciseExcerciseIdRoute:
+    ScheduleScheduleIdExcerciseExcerciseIdRoute,
+  ScheduleScheduleIdExcerciseIndexRoute: ScheduleScheduleIdExcerciseIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
