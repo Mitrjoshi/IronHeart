@@ -10,8 +10,21 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js");
+    window.addEventListener("load", async () => {
+      const reg = await navigator.serviceWorker.register("/sw.js");
+
+      reg.addEventListener("updatefound", () => {
+        const newSW = reg.installing;
+        newSW?.addEventListener("statechange", () => {
+          if (
+            newSW.state === "installed" &&
+            navigator.serviceWorker.controller
+          ) {
+            // New version available — reload to activate
+            window.location.reload();
+          }
+        });
+      });
     });
   }
 
