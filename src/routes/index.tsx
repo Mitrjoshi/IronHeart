@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import {
   Card,
@@ -39,11 +39,13 @@ export const Route = createFileRoute("/")({
 });
 
 function RouteComponent() {
+  const navigate = Route.useNavigate();
+
   return (
     <>
       <Header title="Home" subtitle="Workout Tracker" />
 
-      <div className="space-y-4 pt-[80px]">
+      <div className="space-y-4 pt-20 pb-4">
         <div className="space-y-2 p-4 py-0">
           <p>Weekly Progress</p>
           <Card>
@@ -88,7 +90,18 @@ function RouteComponent() {
               </CardDescription>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" size={"lg"}>
+              <Button
+                onClick={() => {
+                  navigate({
+                    to: "/schedule/$id/start",
+                    params: {
+                      id: "chest",
+                    },
+                  });
+                }}
+                className="w-full"
+                size={"lg"}
+              >
                 Start Workout
               </Button>
             </CardFooter>
@@ -99,24 +112,54 @@ function RouteComponent() {
 
         <div className="space-y-2 p-4 py-0">
           <p>Workout Schedule</p>
-          {[
-            "Monday - Chest",
-            "Tuesday - Back",
-            "Wednesday - Legs",
-            "Thursday - Shoulders",
-            "Friday - Arms",
-          ].map((split) => (
-            <Card key={split}>
-              <CardContent className="flex items-center justify-between">
-                <p>{split}</p>
-                <Button size="icon-sm" className="rounded-full">
-                  <Play fill="black" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          <div className="flex flex-col space-y-2">
+            {[
+              "Monday - Chest",
+              "Tuesday - Back",
+              "Wednesday - Legs",
+              "Thursday - Shoulders",
+              "Friday - Arms",
+            ].map((split) => (
+              <Link
+                key={split}
+                to="/schedule/$id"
+                className="cursor-pointer"
+                params={{ id: split.toLowerCase().split(" ")[2] }}
+              >
+                <Card>
+                  <CardContent className="flex items-center justify-between">
+                    <p>{split}</p>
 
-          <Button size="lg" className="w-full">
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate({
+                          to: "/schedule/$id/start",
+                          params: {
+                            id: split.toLowerCase().split(" ")[2],
+                          },
+                        });
+                      }}
+                      size="icon-sm"
+                      className="rounded-full"
+                    >
+                      <Play fill="black" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+
+          <Button
+            onClick={() => {
+              navigate({
+                to: "/schedule",
+              });
+            }}
+            size="lg"
+            className="w-full cursor-pointer"
+          >
             Edit Schedule
           </Button>
         </div>

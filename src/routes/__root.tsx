@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -18,8 +19,9 @@ function RootComponent() {
     <React.Fragment>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Outlet />
+        <Toaster richColors position="top-right" />
       </ThemeProvider>
-      <TanStackRouterDevtools />
+      {/* <TanStackRouterDevtools /> */}
     </React.Fragment>
   );
 }

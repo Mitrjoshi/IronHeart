@@ -1,5 +1,5 @@
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -18,30 +18,30 @@ export function Header({
   right,
   className,
 }: HeaderProps) {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div
       className={cn(
-        "flex items-center p-4 py-2 justify-between border-b fixed top-0 left-0 right-0 bg-background z-10",
+        "bg-background fixed top-0 right-0 left-0 z-10 flex items-center justify-between border-b p-4 py-2",
         className,
       )}
     >
       {/* LEFT */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex min-w-0 items-center gap-3">
         {showBack && (
           <button
-            onClick={() => navigate({ to: ".." })}
-            className="p-2 rounded-lg hover:bg-muted transition"
+            onClick={() => router.history.back()}
+            className="hover:bg-muted rounded-lg p-2 transition"
           >
             <ArrowLeft size={18} />
           </button>
         )}
 
-        <div className="flex flex-col min-w-0">
-          {title && <div className="text-2xl font-bold truncate">{title}</div>}
+        <div className="flex min-w-0 flex-col">
+          {title && <div className="truncate text-2xl font-bold">{title}</div>}
           {subtitle && (
-            <div className="text-xs text-muted-foreground truncate">
+            <div className="text-muted-foreground truncate text-xs">
               {subtitle}
             </div>
           )}
