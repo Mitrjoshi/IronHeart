@@ -45,6 +45,20 @@ function RouteComponent() {
             <CardContent>
               <WeeklyGraph />
             </CardContent>
+
+            <CardFooter>
+              <Button
+                onClick={() => {
+                  navigate({
+                    to: "/report",
+                  });
+                }}
+                className="w-full"
+                size="lg"
+              >
+                View Detailed Report
+              </Button>
+            </CardFooter>
           </Card>
         </div>
 
@@ -209,39 +223,50 @@ function RouteComponent() {
         <div className="space-y-2 p-4 py-0">
           <p className="text-muted-foreground">Workout History</p>
           <div className="space-y-2">
-            {workoutHistory.slice(0, 3).map((workout, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <p className="flex items-center justify-between">
-                    <span>{workout.scheduleName}</span>
-                    <span className="text-muted-foreground">
-                      {formatDuration(workout.durationSeconds)}
-                    </span>
-                  </p>
-                  <CardDescription>
-                    {workout.exercisesDone.length > 0
-                      ? workout.exercisesDone
-                          .map((exercise) => exercise.name)
-                          .join(", ")
-                      : "No exercises recorded"}
-                  </CardDescription>
-                </CardHeader>
+            {workoutHistory.length > 0 ? (
+              workoutHistory.slice(0, 3).map((workout, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <p className="flex items-center justify-between">
+                      <span>{workout.scheduleName}</span>
+                      <span className="text-muted-foreground">
+                        {formatDuration(workout.durationSeconds)}
+                      </span>
+                    </p>
+                    <CardDescription>
+                      {workout.exercisesDone.length > 0
+                        ? workout.exercisesDone
+                            .map((exercise) => exercise.name)
+                            .join(", ")
+                        : "No exercises recorded"}
+                    </CardDescription>
+                  </CardHeader>
 
-                <CardFooter className="flex items-center justify-around">
+                  <CardFooter className="flex items-center justify-around">
+                    <p className="text-muted-foreground text-center">
+                      {workout.numberOfSets} sets
+                    </p>
+                    <Separator orientation="vertical" />
+                    <p className="text-muted-foreground text-center">
+                      {workout.totalReps} reps
+                    </p>
+                    <Separator orientation="vertical" />
+                    <p className="text-muted-foreground text-center">
+                      {formatVolume(workout.totalVolume)}
+                    </p>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="space-y-4">
                   <p className="text-muted-foreground text-center">
-                    {workout.numberOfSets} sets
+                    You don't have any workout history yet. Start working out
+                    and your workout logs will appear here.
                   </p>
-                  <Separator orientation="vertical" />
-                  <p className="text-muted-foreground text-center">
-                    {workout.totalReps} reps
-                  </p>
-                  <Separator orientation="vertical" />
-                  <p className="text-muted-foreground text-center">
-                    {formatVolume(workout.totalVolume)}
-                  </p>
-                </CardFooter>
+                </CardContent>
               </Card>
-            ))}
+            )}
 
             {workoutHistory.length > 3 && (
               <Button
