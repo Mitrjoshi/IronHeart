@@ -97,85 +97,90 @@ export const useExercisesBySchedule = (scheduleId: string) => {
 
   const lastWorkout = getLastWorkout(scheduleId, workoutIds);
 
-  return exerciseIds.reduce(
-    (acc, id) => {
-      const rowScheduleId = store.getCell(
-        "exercises",
-        id,
-        "scheduleId",
-      ) as string;
-
-      if (rowScheduleId === scheduleId) {
-        const lastWorkoutSets = getLastWorkoutSets(
+  return exerciseIds
+    .reduce(
+      (acc, id) => {
+        const rowScheduleId = store.getCell(
+          "exercises",
           id,
-          lastWorkout,
-          workoutSetIds,
-        );
+          "scheduleId",
+        ) as string;
 
-        const templateSets = setIds.filter(
-          (setId) => store.getCell("sets", setId, "exerciseId") === id,
-        );
-
-        const numberOfSets = lastWorkoutSets?.length ?? templateSets.length;
-
-        const totalReps =
-          lastWorkoutSets?.reduce((sum, s) => sum + s.reps, 0) ??
-          templateSets.reduce(
-            (sum, setId) =>
-              sum + (store.getCell("sets", setId, "reps") as number),
-            0,
+        if (rowScheduleId === scheduleId) {
+          const lastWorkoutSets = getLastWorkoutSets(
+            id,
+            lastWorkout,
+            workoutSetIds,
           );
 
-        const maxWeight =
-          lastWorkoutSets && lastWorkoutSets.length > 0
-            ? Math.max(...lastWorkoutSets.map((s) => s.weight))
-            : templateSets.length > 0
-              ? Math.max(
-                  ...templateSets.map(
-                    (setId) => store.getCell("sets", setId, "weight") as number,
-                  ),
-                )
-              : 0;
+          const templateSets = setIds.filter(
+            (setId) => store.getCell("sets", setId, "exerciseId") === id,
+          );
 
-        acc.push({
-          id,
-          scheduleId,
-          name: store.getCell("exercises", id, "name") as string,
-          type:
-            (store.getCell("exercises", id, "type") as ExerciseType) ??
-            "weighted",
-          numberOfSets,
-          totalReps,
-          maxWeight,
-          lastWorkoutSets,
-          lastWorkedOutAt: lastWorkout
-            ? (store.getCell("workouts", lastWorkout, "finishedAt") as number)
-            : null,
-        });
-      }
+          const numberOfSets = lastWorkoutSets?.length ?? templateSets.length;
 
-      return acc;
-    },
-    [] as {
-      id: string;
-      name: string;
-      type: ExerciseType;
-      scheduleId: string;
-      numberOfSets: number;
-      totalReps: number;
-      maxWeight: number;
-      lastWorkoutSets:
-        | {
-            id: string;
-            reps: number;
-            weight: number;
-            duration: number;
-            order: number;
-          }[]
-        | null;
-      lastWorkedOutAt: number | null;
-    }[],
-  );
+          const totalReps =
+            lastWorkoutSets?.reduce((sum, s) => sum + s.reps, 0) ??
+            templateSets.reduce(
+              (sum, setId) =>
+                sum + (store.getCell("sets", setId, "reps") as number),
+              0,
+            );
+
+          const maxWeight =
+            lastWorkoutSets && lastWorkoutSets.length > 0
+              ? Math.max(...lastWorkoutSets.map((s) => s.weight))
+              : templateSets.length > 0
+                ? Math.max(
+                    ...templateSets.map(
+                      (setId) =>
+                        store.getCell("sets", setId, "weight") as number,
+                    ),
+                  )
+                : 0;
+
+          acc.push({
+            id,
+            scheduleId,
+            name: store.getCell("exercises", id, "name") as string,
+            type:
+              (store.getCell("exercises", id, "type") as ExerciseType) ??
+              "weighted",
+            order: (store.getCell("exercises", id, "order") as number) ?? 0,
+            numberOfSets,
+            totalReps,
+            maxWeight,
+            lastWorkoutSets,
+            lastWorkedOutAt: lastWorkout
+              ? (store.getCell("workouts", lastWorkout, "finishedAt") as number)
+              : null,
+          });
+        }
+
+        return acc;
+      },
+      [] as {
+        id: string;
+        name: string;
+        type: ExerciseType;
+        order: number;
+        scheduleId: string;
+        numberOfSets: number;
+        totalReps: number;
+        maxWeight: number;
+        lastWorkoutSets:
+          | {
+              id: string;
+              reps: number;
+              weight: number;
+              duration: number;
+              order: number;
+            }[]
+          | null;
+        lastWorkedOutAt: number | null;
+      }[],
+    )
+    .sort((a, b) => a.order - b.order);
 };
 
 export const useExerciseById = (id: string) => {

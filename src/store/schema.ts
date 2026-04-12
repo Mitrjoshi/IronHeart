@@ -13,7 +13,8 @@ store.setTablesSchema({
     name: { type: "string" },
     scheduleId: { type: "string" },
     createdAt: { type: "number" },
-    type: { type: "string" }, // "weighted" | "duration" | "bodyweight"
+    type: { type: "string" },
+    order: { type: "number" },
   },
   sets: {
     exerciseId: { type: "string" },
