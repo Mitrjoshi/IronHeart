@@ -1,4 +1,3 @@
-// components/WeeklyStatsChart.tsx
 import {
   ChartContainer,
   ChartTooltip,
@@ -7,7 +6,7 @@ import {
 } from "@/components/ui/chart";
 import { useWeeklyStats } from "@/hooks/store/useWeeklyStats";
 import { capitalize } from "@/utils";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 const chartConfig = {
   totalReps: { label: "Reps", color: "var(--chart-1)" },
@@ -40,9 +39,34 @@ export const WeeklyGraph = () => {
           axisLine={false}
           tickFormatter={(value) => capitalize(value).slice(0, 3)}
         />
+        <YAxis
+          yAxisId="reps"
+          orientation="left"
+          tickLine={false}
+          axisLine={false}
+          width={30}
+        />
+        <YAxis
+          yAxisId="volume"
+          orientation="right"
+          tickLine={false}
+          axisLine={false}
+          width={45}
+          tickFormatter={(v) => `${(v / 1000).toFixed(0)}t`}
+        />
         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-        <Bar dataKey="totalReps" fill="var(--color-totalReps)" radius={8} />
-        <Bar dataKey="totalWeight" fill="var(--color-totalWeight)" radius={8} />
+        <Bar
+          yAxisId="reps"
+          dataKey="totalReps"
+          fill="var(--color-totalReps)"
+          radius={8}
+        />
+        <Bar
+          yAxisId="volume"
+          dataKey="totalWeight"
+          fill="var(--color-totalWeight)"
+          radius={8}
+        />
       </BarChart>
     </ChartContainer>
   );

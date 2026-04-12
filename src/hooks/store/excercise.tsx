@@ -40,9 +40,54 @@ export const useAllExercises = () => {
   }));
 };
 
+const getLastWorkout = (scheduleId: string, workoutIds: string[]) =>
+  workoutIds
+    .filter(
+      (workoutId) =>
+        store.getCell("workouts", workoutId, "scheduleId") === scheduleId &&
+        (store.getCell("workouts", workoutId, "finishedAt") as number) > 0,
+    )
+    .sort(
+      (a, b) =>
+        (store.getCell("workouts", b, "finishedAt") as number) -
+        (store.getCell("workouts", a, "finishedAt") as number),
+    )[0] ?? null;
+
+const getLastWorkoutSets = (
+  exerciseId: string,
+  lastWorkout: string | null,
+  workoutSetIds: string[],
+) => {
+  if (!lastWorkout) return null;
+
+  const sets = workoutSetIds
+    .filter(
+      (setId) =>
+        store.getCell("workoutSets", setId, "workoutId") === lastWorkout &&
+        store.getCell("workoutSets", setId, "exerciseId") === exerciseId,
+    )
+    .sort(
+      (a, b) =>
+        (store.getCell("workoutSets", a, "order") as number) -
+        (store.getCell("workoutSets", b, "order") as number),
+    )
+    .map((setId) => ({
+      id: setId,
+      reps: store.getCell("workoutSets", setId, "reps") as number,
+      weight: store.getCell("workoutSets", setId, "weight") as number,
+      order: store.getCell("workoutSets", setId, "order") as number,
+    }));
+
+  return sets.length > 0 ? sets : null;
+};
+
 export const useExercisesBySchedule = (scheduleId: string) => {
   const exerciseIds = useRowIds("exercises", store);
-  const setIds = useRowIds("sets", store);
+  const setIds = useRowIds("sets", store); // was missing
+  const workoutIds = useRowIds("workouts", store);
+  const workoutSetIds = useRowIds("workoutSets", store);
+
+  const lastWorkout = getLastWorkout(scheduleId, workoutIds);
 
   return exerciseIds.reduce(
     (acc, id) => {
@@ -53,23 +98,36 @@ export const useExercisesBySchedule = (scheduleId: string) => {
       ) as string;
 
       if (rowScheduleId === scheduleId) {
-        const exerciseSets = setIds.filter(
+        const lastWorkoutSets = getLastWorkoutSets(
+          id,
+          lastWorkout,
+          workoutSetIds,
+        );
+
+        const templateSets = setIds.filter(
           (setId) => store.getCell("sets", setId, "exerciseId") === id,
         );
 
-        const numberOfSets = exerciseSets.length;
+        const numberOfSets = lastWorkoutSets?.length ?? templateSets.length;
 
-        const totalReps = exerciseSets.reduce(
-          (sum, setId) =>
-            sum + (store.getCell("sets", setId, "reps") as number),
-          0,
-        );
+        const totalReps =
+          lastWorkoutSets?.reduce((sum, s) => sum + s.reps, 0) ??
+          templateSets.reduce(
+            (sum, setId) =>
+              sum + (store.getCell("sets", setId, "reps") as number),
+            0,
+          );
 
-        const maxWeight = Math.max(
-          ...exerciseSets.map(
-            (setId) => store.getCell("sets", setId, "weight") as number,
-          ),
-        );
+        const maxWeight =
+          lastWorkoutSets && lastWorkoutSets.length > 0
+            ? Math.max(...lastWorkoutSets.map((s) => s.weight))
+            : templateSets.length > 0
+              ? Math.max(
+                  ...templateSets.map(
+                    (setId) => store.getCell("sets", setId, "weight") as number,
+                  ),
+                )
+              : 0;
 
         acc.push({
           id,
@@ -78,6 +136,10 @@ export const useExercisesBySchedule = (scheduleId: string) => {
           numberOfSets,
           totalReps,
           maxWeight,
+          lastWorkoutSets,
+          lastWorkedOutAt: lastWorkout
+            ? (store.getCell("workouts", lastWorkout, "finishedAt") as number)
+            : null,
         });
       }
 
@@ -90,37 +152,33 @@ export const useExercisesBySchedule = (scheduleId: string) => {
       numberOfSets: number;
       totalReps: number;
       maxWeight: number;
+      lastWorkoutSets:
+        | { id: string; reps: number; weight: number; order: number }[]
+        | null;
+      lastWorkedOutAt: number | null;
     }[],
   );
 };
 
 export const useExerciseById = (id: string) => {
   const row = useRow("exercises", id, store);
-  const setIds = useRowIds("sets", store);
+  const workoutIds = useRowIds("workouts", store);
+  const workoutSetIds = useRowIds("workoutSets", store);
 
   if (!row.name) return null;
 
-  const sets = setIds
-    .filter((setId) => store.getCell("sets", setId, "exerciseId") === id)
-    .sort(
-      (a, b) =>
-        (store.getCell("sets", a, "order") as number) -
-        (store.getCell("sets", b, "order") as number),
-    )
-    .map((setId) => ({
-      id: setId,
-      reps: store.getCell("sets", setId, "reps") as number,
-      weight: store.getCell("sets", setId, "weight") as number,
-      order: store.getCell("sets", setId, "order") as number,
-    }));
+  const scheduleId = row.scheduleId as string;
+  const lastWorkout = getLastWorkout(scheduleId, workoutIds);
+  const sets = getLastWorkoutSets(id, lastWorkout, workoutSetIds) ?? [];
 
   return {
     id,
     name: row.name as string,
-    scheduleId: row.scheduleId as string,
+    scheduleId,
     sets,
   };
 };
+
 export const useDeleteExercise = () => {
   return (id: string) => {
     store.delRow("exercises", id);
@@ -139,14 +197,12 @@ export const useUpdateExercise = () => {
       .getRowIds("sets")
       .filter((setId) => store.getCell("sets", setId, "exerciseId") === id);
 
-    // delete removed sets
     existingSetIds.forEach((setId) => {
       if (!sets.find((s) => s.id === setId)) {
         store.delRow("sets", setId);
       }
     });
 
-    // update existing or add new sets
     sets.forEach((set, index) => {
       if (set.id) {
         store.setRow("sets", set.id, {

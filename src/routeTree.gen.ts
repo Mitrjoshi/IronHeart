@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ScheduleIndexRouteImport } from './routes/schedule/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
@@ -17,6 +18,11 @@ import { Route as ScheduleScheduleIdStartRouteImport } from './routes/schedule/$
 import { Route as ScheduleScheduleIdExcerciseIndexRouteImport } from './routes/schedule/$scheduleId/excercise/index'
 import { Route as ScheduleScheduleIdExcerciseExcerciseIdRouteImport } from './routes/schedule/$scheduleId/excercise/$excerciseId'
 
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -57,6 +63,7 @@ const ScheduleScheduleIdExcerciseExcerciseIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule': typeof ScheduleIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
@@ -76,6 +84,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/history'
     | '/schedule/create'
     | '/schedule/'
     | '/schedule/$scheduleId/start'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/history'
     | '/schedule/create'
     | '/schedule'
     | '/schedule/$scheduleId/start'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/history'
     | '/schedule/create'
     | '/schedule/'
     | '/schedule/$scheduleId/start'
@@ -115,6 +127,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoryRoute: typeof HistoryRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   ScheduleIndexRoute: typeof ScheduleIndexRoute
   ScheduleScheduleIdStartRoute: typeof ScheduleScheduleIdStartRoute
@@ -125,6 +138,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -179,6 +199,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoryRoute: HistoryRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   ScheduleIndexRoute: ScheduleIndexRoute,
   ScheduleScheduleIdStartRoute: ScheduleScheduleIdStartRoute,

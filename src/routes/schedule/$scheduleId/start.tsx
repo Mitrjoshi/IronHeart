@@ -10,9 +10,26 @@ import {
 import { Input } from "@/components/ui/input";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
-import { createFileRoute } from "@tanstack/react-router";
+import { useFinishWorkout, useStartWorkout } from "@/hooks/store/workouts";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Minus, Plus, SquareArrowRightExit } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  useClearSession,
+  useLoadSession,
+  useSaveSession,
+} from "@/hooks/store/activeSession";
 
 export const Route = createFileRoute("/schedule/$scheduleId/start")({
   component: RouteComponent,
@@ -29,7 +46,6 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
       onComplete();
       return;
     }
-
     const timeout = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(timeout);
   }, [count]);
@@ -51,31 +67,71 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
 }
 
 function RouteComponent() {
+  const router = useRouter();
   const scheduleId = Route.useParams().scheduleId;
   const scheduleData = useScheduleById(scheduleId);
   const exercises = useExercisesBySchedule(scheduleId);
 
-  const [countdown, setCountdown] = useState(true);
-  const [time, setTime] = useState(0);
+  const startWorkout = useStartWorkout();
+  const finishWorkout = useFinishWorkout();
+  const saveSession = useSaveSession();
+  const clearSession = useClearSession();
+  const savedSession = useLoadSession(scheduleId);
+
+  const isResuming = !!savedSession;
+
+  const [countdown, setCountdown] = useState(!isResuming);
+  const [time, setTime] = useState(savedSession?.elapsedTime ?? 0);
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
+  const workoutIdRef = useRef<string | null>(savedSession?.workoutId ?? null);
 
-  const [exerciseSets, setExerciseSets] = useState<ExerciseSets>({});
+  const [exerciseSets, setExerciseSets] = useState<ExerciseSets>(
+    savedSession?.exerciseSets ?? {},
+  );
 
+  // only initialize sets if NOT resuming
   useEffect(() => {
-    if (!exercises.length) return;
+    if (isResuming || !exercises.length) return;
     setExerciseSets(
       Object.fromEntries(
         exercises.map((ex) => [
           ex.id,
-          Array.from({ length: ex.numberOfSets }, () => ({
-            reps: "",
-            weight: "",
-          })),
+          ex.lastWorkoutSets && ex.lastWorkoutSets.length > 0
+            ? ex.lastWorkoutSets.map((s) => ({
+                reps: String(s.reps),
+                weight: String(s.weight),
+              }))
+            : Array.from({ length: ex.numberOfSets || 1 }, () => ({
+                reps: "",
+                weight: "",
+              })),
         ]),
       ),
     );
   }, [exercises.length]);
+
+  const update = () => {
+    if (startRef.current !== null) {
+      setTime(performance.now() - startRef.current);
+      rafRef.current = requestAnimationFrame(update);
+    }
+  };
+
+  const start = (fromTime = 0) => {
+    startRef.current = performance.now() - fromTime;
+    rafRef.current = requestAnimationFrame(update);
+  };
+
+  // auto start timer if resuming
+  useEffect(() => {
+    if (isResuming) {
+      start(savedSession.elapsedTime);
+    }
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   const updateSet = (
     exerciseId: string,
@@ -105,32 +161,44 @@ function RouteComponent() {
     }));
   };
 
-  const update = () => {
-    if (startRef.current !== null) {
-      setTime(performance.now() - startRef.current);
-      rafRef.current = requestAnimationFrame(update);
-    }
-  };
-
-  const start = () => {
-    startRef.current = performance.now() - time;
-    rafRef.current = requestAnimationFrame(update);
-  };
-
-  const pause = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  };
-
   const handleCountdownComplete = () => {
     setCountdown(false);
+    workoutIdRef.current = startWorkout(scheduleId);
     start();
   };
 
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
+  const handleFinishWorkout = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (!workoutIdRef.current) return;
+
+    const durationSeconds = Math.floor(time / 1000);
+    const sets = exercises.flatMap((exercise) =>
+      (exerciseSets[exercise.id] ?? []).map((set, index) => ({
+        exerciseId: exercise.id,
+        reps: Number(set.reps) || 0,
+        weight: Number(set.weight) || 0,
+        order: index + 1,
+      })),
+    );
+
+    finishWorkout(workoutIdRef.current, durationSeconds, sets);
+    clearSession(scheduleId);
+    router.history.back();
+  };
+
+  const handleExit = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (workoutIdRef.current) {
+      saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
+    }
+    router.history.back();
+  };
+
+  const handleDiscard = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    clearSession(scheduleId);
+    router.history.back();
+  };
 
   const sec = Math.floor((time / 1000) % 60);
   const min = Math.floor((time / (1000 * 60)) % 60);
@@ -143,13 +211,37 @@ function RouteComponent() {
 
       <Header
         right={
-          <Button variant="destructive">
-            <SquareArrowRightExit />
-            Exit
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <SquareArrowRightExit />
+                Exit
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Exit Workout?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your progress will be saved and you can continue later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col gap-2">
+                <AlertDialogAction onClick={handleExit}>
+                  Save & Exit
+                </AlertDialogAction>
+                <AlertDialogAction
+                  onClick={handleDiscard}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Discard Workout
+                </AlertDialogAction>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         }
         title={scheduleData?.name}
-        subtitle="Start your Workout"
+        subtitle={isResuming ? "Resuming Workout" : "Start your Workout"}
         showBack
       />
 
@@ -161,7 +253,7 @@ function RouteComponent() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={pause} size="lg" className="w-full">
+            <Button onClick={handleFinishWorkout} size="lg" className="w-full">
               <p>Finish Workout</p>
             </Button>
           </CardFooter>

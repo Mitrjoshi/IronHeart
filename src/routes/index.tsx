@@ -10,8 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAllSchedules, useSchedulesToday } from "@/hooks/store/schedules";
-import { capitalize } from "@/utils";
+import {
+  capitalize,
+  formatDuration,
+  formatElapsedTime,
+  formatVolume,
+} from "@/utils";
 import { WeeklyGraph } from "@/components/WeeklyGraph";
+import { useActiveSessions } from "@/hooks/store/activeSession";
+import { useWorkoutHistory } from "@/hooks/store/workouts";
 export const description = "A bar chart";
 
 export const Route = createFileRoute("/")({
@@ -23,6 +30,9 @@ function RouteComponent() {
 
   const schedules = useAllSchedules();
   const todaySchedules = useSchedulesToday();
+  const workoutHistory = useWorkoutHistory();
+
+  const activeSessions = useActiveSessions();
 
   return (
     <>
@@ -34,17 +44,46 @@ function RouteComponent() {
           <Card>
             <CardContent>
               <WeeklyGraph />
-
-              {/* <p className="text-muted-foreground text-center">
-                Track your weekly progress to see how you're progressing towards
-                your fitness goals. Check your workout history, see how many
-                workouts you've completed, and track your progress over time.
-              </p> */}
             </CardContent>
           </Card>
         </div>
 
         <Separator />
+
+        {activeSessions.map((session) => (
+          <>
+            <div className="px-4">
+              <Card key={session.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold">Resume {session.scheduleName}</p>
+                    <p className="text-muted-foreground">
+                      {formatElapsedTime(session.elapsedTime)}
+                    </p>
+                  </div>
+                  <CardDescription>
+                    {capitalize(session.scheduleDay)}
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() =>
+                      navigate({
+                        to: "/schedule/$scheduleId/start",
+                        params: { scheduleId: session.scheduleId },
+                      })
+                    }
+                  >
+                    Continue Workout
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+            <Separator />
+          </>
+        ))}
 
         <div className="space-y-2 p-4 py-0">
           <p className="text-muted-foreground">Start Today's Workout</p>
@@ -163,6 +202,61 @@ function RouteComponent() {
               Edit Schedule
             </Button>
           )}
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2 p-4 py-0">
+          <p className="text-muted-foreground">Workout History</p>
+          <div className="space-y-2">
+            {workoutHistory.slice(0, 3).map((workout, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <p className="flex items-center justify-between">
+                    <span>{workout.scheduleName}</span>
+                    <span className="text-muted-foreground">
+                      {formatDuration(workout.durationSeconds)}
+                    </span>
+                  </p>
+                  <CardDescription>
+                    {workout.exercisesDone.length > 0
+                      ? workout.exercisesDone
+                          .map((exercise) => exercise.name)
+                          .join(", ")
+                      : "No exercises recorded"}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardFooter className="flex items-center justify-around">
+                  <p className="text-muted-foreground text-center">
+                    {workout.numberOfSets} sets
+                  </p>
+                  <Separator orientation="vertical" />
+                  <p className="text-muted-foreground text-center">
+                    {workout.totalReps} reps
+                  </p>
+                  <Separator orientation="vertical" />
+                  <p className="text-muted-foreground text-center">
+                    {formatVolume(workout.totalVolume)}
+                  </p>
+                </CardFooter>
+              </Card>
+            ))}
+
+            {workoutHistory.length > 3 && (
+              <Button
+                onClick={() => {
+                  navigate({
+                    to: "/history",
+                  });
+                }}
+                size="lg"
+                className="w-full"
+              >
+                View All Workout Logs
+              </Button>
+            )}
+          </div>
         </div>
 
         <Separator />

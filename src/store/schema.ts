@@ -20,6 +20,26 @@ store.setTablesSchema({
     weight: { type: "number" },
     order: { type: "number" },
   },
+  workouts: {
+    scheduleId: { type: "string" },
+    startedAt: { type: "number" },
+    finishedAt: { type: "number" },
+    durationSeconds: { type: "number" },
+  },
+  workoutSets: {
+    workoutId: { type: "string" },
+    exerciseId: { type: "string" },
+    reps: { type: "number" },
+    weight: { type: "number" },
+    order: { type: "number" },
+  },
+  activeSessions: {
+    scheduleId: { type: "string" },
+    workoutId: { type: "string" },
+    elapsedTime: { type: "number" },
+    exerciseSets: { type: "string" }, // JSON stringified
+    savedAt: { type: "number" },
+  },
 });
 
 const persister = createLocalPersister(store, "schedule-store");
