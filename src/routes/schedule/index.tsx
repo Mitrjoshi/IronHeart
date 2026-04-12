@@ -53,7 +53,7 @@ function RouteComponent() {
               to: "/schedule/create",
             });
           }}
-          className="fixed right-4 bottom-24 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"
+          className="fixed right-4 bottom-22 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"
           size="icon-lg"
         >
           <Plus className="size-10" />
