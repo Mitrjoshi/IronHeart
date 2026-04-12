@@ -9,11 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  // DropdownMenuLabel,
-  // DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-// import { Label } from "radix-ui";
 import { toast } from "sonner";
 import { useAddSchedule } from "@/hooks/store/schedules";
 
@@ -47,7 +44,7 @@ function RouteComponent() {
     <>
       <Header showBack title="Add Workout" subtitle="Workout Tracker" />
 
-      <div className="space-y-4 pt-20">
+      <div className="h-screen space-y-4 pt-20">
         <div className="space-y-2 p-4 py-0">
           <div className="flex flex-col space-y-2">
             <Card>

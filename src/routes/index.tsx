@@ -19,6 +19,8 @@ import {
 import { WeeklyGraph } from "@/components/WeeklyGraph";
 import { useActiveSessions } from "@/hooks/store/activeSession";
 import { useWorkoutHistory } from "@/hooks/store/workouts";
+import { ChevronRight } from "lucide-react";
+import { AppLayout } from "@/components/AppLayout";
 export const description = "A bar chart";
 
 export const Route = createFileRoute("/")({
@@ -35,7 +37,7 @@ function RouteComponent() {
   const activeSessions = useActiveSessions();
 
   return (
-    <>
+    <AppLayout>
       <Header title="Home" subtitle="Workout Tracker" />
 
       <div className="space-y-4 pt-20 pb-4">
@@ -139,7 +141,9 @@ function RouteComponent() {
                     No workout scheduled for today. Please check your workout
                     schedule and add a workout for today.
                   </p>
+                </CardContent>
 
+                <CardFooter>
                   <Button
                     size="lg"
                     className="w-full"
@@ -147,7 +151,7 @@ function RouteComponent() {
                   >
                     <p>Create Schedule</p>
                   </Button>
-                </CardContent>
+                </CardFooter>
               </>
             )}
           </Card>
@@ -156,7 +160,22 @@ function RouteComponent() {
         <Separator />
 
         <div className="space-y-2 p-4 py-0">
-          <p className="text-muted-foreground">Workout Schedule</p>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">Workout Schedule</p>
+            <Button
+              onClick={() => {
+                navigate({
+                  to: "/schedule",
+                });
+              }}
+              variant="link"
+              className="text-muted-foreground underline"
+              size="sm"
+            >
+              View All
+              <ChevronRight />
+            </Button>
+          </div>
           <div className="flex flex-col space-y-2">
             {schedules.map((split) => (
               <Link
@@ -182,7 +201,7 @@ function RouteComponent() {
             ))}
           </div>
 
-          {schedules.length === 0 ? (
+          {schedules.length === 0 && (
             <Card>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground text-center">
@@ -203,25 +222,30 @@ function RouteComponent() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
-            <Button
-              onClick={() => {
-                navigate({
-                  to: "/schedule",
-                });
-              }}
-              size="lg"
-              className="w-full cursor-pointer"
-            >
-              Edit Schedule
-            </Button>
           )}
         </div>
 
         <Separator />
 
         <div className="space-y-2 p-4 py-0">
-          <p className="text-muted-foreground">Workout History</p>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">Workout History</p>
+            {workoutHistory.length > 3 && (
+              <Button
+                onClick={() => {
+                  navigate({
+                    to: "/history",
+                  });
+                }}
+                variant="link"
+                className="text-muted-foreground underline"
+                size="sm"
+              >
+                View All
+                <ChevronRight />
+              </Button>
+            )}
+          </div>
           <div className="space-y-2">
             {workoutHistory.length > 0 ? (
               workoutHistory.slice(0, 3).map((workout, index) => (
@@ -267,20 +291,6 @@ function RouteComponent() {
                 </CardContent>
               </Card>
             )}
-
-            {workoutHistory.length > 3 && (
-              <Button
-                onClick={() => {
-                  navigate({
-                    to: "/history",
-                  });
-                }}
-                size="lg"
-                className="w-full"
-              >
-                View All Workout Logs
-              </Button>
-            )}
           </div>
         </div>
 
@@ -310,14 +320,16 @@ function RouteComponent() {
                 Track your weight progress to see how you're progressing towards
                 your
               </p>
+            </CardContent>
 
+            <CardFooter>
               <Button className="w-full" size="lg">
                 <p>Add Weight</p>
               </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         </div>
       </div>
-    </>
+    </AppLayout>
   );
 }

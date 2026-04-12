@@ -77,7 +77,7 @@ function RouteComponent() {
               router.history.back();
             }}
             variant="destructive"
-            size="icon-lg"
+            size="icon"
           >
             <Trash />
           </Button>

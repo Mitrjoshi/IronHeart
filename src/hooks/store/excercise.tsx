@@ -162,6 +162,7 @@ export const useExercisesBySchedule = (scheduleId: string) => {
 
 export const useExerciseById = (id: string) => {
   const row = useRow("exercises", id, store);
+  const setIds = useRowIds("sets", store);
   const workoutIds = useRowIds("workouts", store);
   const workoutSetIds = useRowIds("workoutSets", store);
 
@@ -169,7 +170,23 @@ export const useExerciseById = (id: string) => {
 
   const scheduleId = row.scheduleId as string;
   const lastWorkout = getLastWorkout(scheduleId, workoutIds);
-  const sets = getLastWorkoutSets(id, lastWorkout, workoutSetIds) ?? [];
+  const lastWorkoutSets = getLastWorkoutSets(id, lastWorkout, workoutSetIds);
+
+  const sets = lastWorkoutSets
+    ? lastWorkoutSets
+    : setIds
+        .filter((setId) => store.getCell("sets", setId, "exerciseId") === id)
+        .sort(
+          (a, b) =>
+            (store.getCell("sets", a, "order") as number) -
+            (store.getCell("sets", b, "order") as number),
+        )
+        .map((setId) => ({
+          id: setId,
+          reps: store.getCell("sets", setId, "reps") as number,
+          weight: store.getCell("sets", setId, "weight") as number,
+          order: store.getCell("sets", setId, "order") as number,
+        }));
 
   return {
     id,

@@ -1,3 +1,4 @@
+import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
 import {
   Card,
@@ -29,7 +30,7 @@ function RouteComponent() {
   const schedules = useAllExercisesProgress();
 
   return (
-    <>
+    <AppLayout>
       <Header showBack subtitle="Detailed Report" title="Report" />
 
       <div className="space-y-6 px-4 pt-20 pb-4">
@@ -149,6 +150,6 @@ function RouteComponent() {
           </Card>
         )}
       </div>
-    </>
+    </AppLayout>
   );
 }
