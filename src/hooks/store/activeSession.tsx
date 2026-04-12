@@ -1,12 +1,14 @@
 import { store } from "@/store/schema";
 import { useRow, useRowIds } from "tinybase/ui-react";
 
+type SetEntry = { reps: string; weight: string; duration: string };
+
 export const useSaveSession = () => {
   return (
     scheduleId: string,
     workoutId: string,
     elapsedTime: number,
-    exerciseSets: Record<string, { reps: string; weight: string }[]>,
+    exerciseSets: Record<string, SetEntry[]>,
   ) => {
     store.setRow("activeSessions", scheduleId, {
       scheduleId,
@@ -31,10 +33,7 @@ export const useLoadSession = (scheduleId: string) => {
   return {
     workoutId,
     elapsedTime: elapsedTime ?? 0,
-    exerciseSets: JSON.parse(exerciseSets) as Record<
-      string,
-      { reps: string; weight: string }[]
-    >,
+    exerciseSets: JSON.parse(exerciseSets) as Record<string, SetEntry[]>,
     savedAt: savedAt ?? 0,
   };
 };

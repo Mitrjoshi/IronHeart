@@ -7,6 +7,7 @@ type WorkoutSetEntry = {
   exerciseId: string;
   reps: number;
   weight: number;
+  duration: number;
   order: number;
 };
 
@@ -48,6 +49,7 @@ export const useFinishWorkout = () => {
         exerciseId: set.exerciseId,
         reps: set.reps,
         weight: set.weight,
+        duration: set.duration,
         order: set.order,
       });
     });
@@ -57,7 +59,6 @@ export const useFinishWorkout = () => {
 export const useWorkoutHistory = () => {
   const workoutIds = useRowIds("workouts", store);
   const workoutSetIds = useRowIds("workoutSets", store);
-  // const exerciseIds = useRowIds("exercises", store);
 
   return workoutIds
     .filter((id) => store.getCell("workouts", id, "finishedAt") !== 0)
@@ -87,7 +88,12 @@ export const useWorkoutHistory = () => {
         0,
       );
 
-      // unique exercises done in this workout
+      const totalDuration = sets.reduce(
+        (sum, setId) =>
+          sum + (store.getCell("workoutSets", setId, "duration") as number),
+        0,
+      );
+
       const exercisesDone = [
         ...new Set(
           sets.map(
@@ -98,6 +104,7 @@ export const useWorkoutHistory = () => {
       ].map((exerciseId) => ({
         id: exerciseId,
         name: store.getCell("exercises", exerciseId, "name") as string,
+        type: store.getCell("exercises", exerciseId, "type") as string,
       }));
 
       return {
@@ -113,6 +120,7 @@ export const useWorkoutHistory = () => {
         ) as number,
         totalReps,
         totalVolume,
+        totalDuration,
         numberOfSets: sets.length,
         exercisesDone,
       };

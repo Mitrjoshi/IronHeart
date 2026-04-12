@@ -17,7 +17,6 @@ export const useWeeklyStats = () => {
   const workoutSetIds = useRowIds("workoutSets", store);
   const scheduleIds = useRowIds("schedules", store);
 
-  // start of current week (monday)
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
@@ -32,13 +31,11 @@ export const useWeeklyStats = () => {
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(23, 59, 59, 999);
 
-    // workouts completed on this day
     const dayWorkouts = workoutIds.filter((id) => {
       const finishedAt = store.getCell("workouts", id, "finishedAt") as number;
       return finishedAt >= dayStart.getTime() && finishedAt <= dayEnd.getTime();
     });
 
-    // sets from those workouts
     const daySets = workoutSetIds.filter((setId) =>
       dayWorkouts.includes(
         store.getCell("workoutSets", setId, "workoutId") as string,
@@ -59,7 +56,12 @@ export const useWeeklyStats = () => {
       0,
     );
 
-    // schedule name for this day
+    const totalDuration = daySets.reduce(
+      (sum, setId) =>
+        sum + (store.getCell("workoutSets", setId, "duration") as number),
+      0,
+    );
+
     const scheduleId = scheduleIds.find(
       (id) => store.getCell("schedules", id, "day") === day,
     );
@@ -67,7 +69,7 @@ export const useWeeklyStats = () => {
       ? (store.getCell("schedules", scheduleId, "name") as string)
       : null;
 
-    return { day, totalReps, totalWeight, scheduleName };
+    return { day, totalReps, totalWeight, totalDuration, scheduleName };
   });
 };
 
@@ -109,6 +111,12 @@ export const useExerciseProgress = (exerciseId: string) => {
         0,
       );
 
+      const totalDuration = sets.reduce(
+        (sum, setId) =>
+          sum + (store.getCell("workoutSets", setId, "duration") as number),
+        0,
+      );
+
       return {
         workoutId,
         finishedAt: store.getCell(
@@ -119,6 +127,7 @@ export const useExerciseProgress = (exerciseId: string) => {
         maxWeight,
         totalReps,
         totalVolume,
+        totalDuration,
         numberOfSets: sets.length,
       };
     })
@@ -147,6 +156,9 @@ export const useAllExercisesProgress = () => {
     const exercises = scheduleExercises
       .map((exerciseId) => {
         const name = store.getCell("exercises", exerciseId, "name") as string;
+        const type =
+          (store.getCell("exercises", exerciseId, "type") as string) ??
+          "weighted";
 
         const progress = workoutIds
           .filter(
@@ -186,6 +198,13 @@ export const useAllExercisesProgress = () => {
               0,
             );
 
+            const totalDuration = sets.reduce(
+              (sum, setId) =>
+                sum +
+                (store.getCell("workoutSets", setId, "duration") as number),
+              0,
+            );
+
             return {
               workoutId,
               finishedAt: store.getCell(
@@ -196,24 +215,24 @@ export const useAllExercisesProgress = () => {
               maxWeight,
               totalReps,
               totalVolume,
+              totalDuration,
               numberOfSets: sets.length,
             };
           })
           .filter(Boolean)
           .sort((a, b) => a!.finishedAt - b!.finishedAt);
 
-        // overall stats across all sessions
         const allTimePR = progress.length
           ? Math.max(...progress.map((p) => p!.maxWeight))
           : 0;
 
         const totalSessions = progress.length;
-
         const latestSession = progress.at(-1) ?? null;
 
         return {
           exerciseId,
           name,
+          type,
           progress,
           allTimePR,
           totalSessions,

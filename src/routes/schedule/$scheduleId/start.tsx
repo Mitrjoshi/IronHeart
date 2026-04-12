@@ -35,8 +35,10 @@ export const Route = createFileRoute("/schedule/$scheduleId/start")({
   component: RouteComponent,
 });
 
-type SetEntry = { reps: string; weight: string };
+type SetEntry = { reps: string; weight: string; duration: string };
 type ExerciseSets = Record<string, SetEntry[]>;
+
+const emptySet = (): SetEntry => ({ reps: "", weight: "", duration: "" });
 
 function Countdown({ onComplete }: { onComplete: () => void }) {
   const [count, setCount] = useState(3);
@@ -90,7 +92,6 @@ function RouteComponent() {
     savedSession?.exerciseSets ?? {},
   );
 
-  // only initialize sets if NOT resuming
   useEffect(() => {
     if (isResuming || !exercises.length) return;
     setExerciseSets(
@@ -101,11 +102,9 @@ function RouteComponent() {
             ? ex.lastWorkoutSets.map((s) => ({
                 reps: String(s.reps),
                 weight: String(s.weight),
+                duration: String(s.duration ?? 0),
               }))
-            : Array.from({ length: ex.numberOfSets || 1 }, () => ({
-                reps: "",
-                weight: "",
-              })),
+            : Array.from({ length: ex.numberOfSets || 1 }, emptySet),
         ]),
       ),
     );
@@ -123,11 +122,8 @@ function RouteComponent() {
     rafRef.current = requestAnimationFrame(update);
   };
 
-  // auto start timer if resuming
   useEffect(() => {
-    if (isResuming) {
-      start(savedSession.elapsedTime);
-    }
+    if (isResuming) start(savedSession.elapsedTime);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
@@ -150,7 +146,7 @@ function RouteComponent() {
   const addSet = (exerciseId: string) => {
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: [...prev[exerciseId], { reps: "", weight: "" }],
+      [exerciseId]: [...prev[exerciseId], emptySet()],
     }));
   };
 
@@ -177,6 +173,7 @@ function RouteComponent() {
         exerciseId: exercise.id,
         reps: Number(set.reps) || 0,
         weight: Number(set.weight) || 0,
+        duration: Number(set.duration) || 0,
         order: index + 1,
       })),
     );
@@ -278,22 +275,61 @@ function RouteComponent() {
               <CardContent className="flex-col space-y-2">
                 {(exerciseSets[exercise.id] ?? []).map((set, index) => (
                   <div key={index} className="flex w-full items-center gap-2">
-                    <Input
-                      placeholder="Reps"
-                      type="number"
-                      value={set.reps}
-                      onChange={(e) =>
-                        updateSet(exercise.id, index, "reps", e.target.value)
-                      }
-                    />
-                    <Input
-                      placeholder="Weight (kg)"
-                      type="number"
-                      value={set.weight}
-                      onChange={(e) =>
-                        updateSet(exercise.id, index, "weight", e.target.value)
-                      }
-                    />
+                    {exercise.type === "weighted" && (
+                      <>
+                        <Input
+                          placeholder="Reps"
+                          type="number"
+                          value={set.reps}
+                          onChange={(e) =>
+                            updateSet(
+                              exercise.id,
+                              index,
+                              "reps",
+                              e.target.value,
+                            )
+                          }
+                        />
+                        <Input
+                          placeholder="Weight (kg)"
+                          type="number"
+                          value={set.weight}
+                          onChange={(e) =>
+                            updateSet(
+                              exercise.id,
+                              index,
+                              "weight",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </>
+                    )}
+                    {exercise.type === "duration" && (
+                      <Input
+                        placeholder="Duration (sec)"
+                        type="number"
+                        value={set.duration}
+                        onChange={(e) =>
+                          updateSet(
+                            exercise.id,
+                            index,
+                            "duration",
+                            e.target.value,
+                          )
+                        }
+                      />
+                    )}
+                    {exercise.type === "bodyweight" && (
+                      <Input
+                        placeholder="Reps"
+                        type="number"
+                        value={set.reps}
+                        onChange={(e) =>
+                          updateSet(exercise.id, index, "reps", e.target.value)
+                        }
+                      />
+                    )}
                     <Button
                       disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
                       onClick={() => removeSet(exercise.id, index)}

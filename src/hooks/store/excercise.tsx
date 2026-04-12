@@ -3,25 +3,30 @@ import { v4 as uuid } from "uuid";
 import { useRow, useRowIds } from "tinybase/ui-react";
 import { store } from "@/store/schema";
 
+export type ExerciseType = "weighted" | "duration" | "bodyweight";
+
 export const useAddExercise = () => {
   return (
     name: string,
     scheduleId: string,
-    sets: { reps: number; weight: number }[],
+    type: ExerciseType,
+    sets: { reps?: number; weight?: number; duration?: number }[],
   ) => {
     const exerciseId = uuid();
 
     store.setRow("exercises", exerciseId, {
       name,
       scheduleId,
+      type,
       createdAt: Date.now(),
     });
 
     sets.forEach((set, index) => {
       store.setRow("sets", uuid(), {
         exerciseId,
-        reps: set.reps,
-        weight: set.weight,
+        reps: set.reps ?? 0,
+        weight: set.weight ?? 0,
+        duration: set.duration ?? 0,
         order: index + 1,
       });
     });
@@ -36,6 +41,8 @@ export const useAllExercises = () => {
   return ids.map((id) => ({
     id,
     name: store.getCell("exercises", id, "name") as string,
+    type:
+      (store.getCell("exercises", id, "type") as ExerciseType) ?? "weighted",
     scheduleId: store.getCell("exercises", id, "scheduleId") as string,
   }));
 };
@@ -75,6 +82,7 @@ const getLastWorkoutSets = (
       id: setId,
       reps: store.getCell("workoutSets", setId, "reps") as number,
       weight: store.getCell("workoutSets", setId, "weight") as number,
+      duration: store.getCell("workoutSets", setId, "duration") as number,
       order: store.getCell("workoutSets", setId, "order") as number,
     }));
 
@@ -83,7 +91,7 @@ const getLastWorkoutSets = (
 
 export const useExercisesBySchedule = (scheduleId: string) => {
   const exerciseIds = useRowIds("exercises", store);
-  const setIds = useRowIds("sets", store); // was missing
+  const setIds = useRowIds("sets", store);
   const workoutIds = useRowIds("workouts", store);
   const workoutSetIds = useRowIds("workoutSets", store);
 
@@ -133,6 +141,9 @@ export const useExercisesBySchedule = (scheduleId: string) => {
           id,
           scheduleId,
           name: store.getCell("exercises", id, "name") as string,
+          type:
+            (store.getCell("exercises", id, "type") as ExerciseType) ??
+            "weighted",
           numberOfSets,
           totalReps,
           maxWeight,
@@ -148,12 +159,19 @@ export const useExercisesBySchedule = (scheduleId: string) => {
     [] as {
       id: string;
       name: string;
+      type: ExerciseType;
       scheduleId: string;
       numberOfSets: number;
       totalReps: number;
       maxWeight: number;
       lastWorkoutSets:
-        | { id: string; reps: number; weight: number; order: number }[]
+        | {
+            id: string;
+            reps: number;
+            weight: number;
+            duration: number;
+            order: number;
+          }[]
         | null;
       lastWorkedOutAt: number | null;
     }[],
@@ -185,12 +203,14 @@ export const useExerciseById = (id: string) => {
           id: setId,
           reps: store.getCell("sets", setId, "reps") as number,
           weight: store.getCell("sets", setId, "weight") as number,
+          duration: store.getCell("sets", setId, "duration") as number,
           order: store.getCell("sets", setId, "order") as number,
         }));
 
   return {
     id,
     name: row.name as string,
+    type: (row.type as ExerciseType) ?? "weighted",
     scheduleId,
     sets,
   };
@@ -206,7 +226,7 @@ export const useUpdateExercise = () => {
   return (
     id: string,
     name: string,
-    sets: { id?: string; reps: number; weight: number }[],
+    sets: { id?: string; reps: number; weight: number; duration: number }[],
   ) => {
     store.setCell("exercises", id, "name", name);
 
@@ -226,6 +246,7 @@ export const useUpdateExercise = () => {
           exerciseId: id,
           reps: set.reps,
           weight: set.weight,
+          duration: set.duration,
           order: index + 1,
         });
       } else {
@@ -233,6 +254,7 @@ export const useUpdateExercise = () => {
           exerciseId: id,
           reps: set.reps,
           weight: set.weight,
+          duration: set.duration,
           order: index + 1,
         });
       }

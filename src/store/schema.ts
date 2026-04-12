@@ -13,11 +13,13 @@ store.setTablesSchema({
     name: { type: "string" },
     scheduleId: { type: "string" },
     createdAt: { type: "number" },
+    type: { type: "string" }, // "weighted" | "duration" | "bodyweight"
   },
   sets: {
     exerciseId: { type: "string" },
     reps: { type: "number" },
     weight: { type: "number" },
+    duration: { type: "number" }, // seconds, used when type is "duration"
     order: { type: "number" },
   },
   workouts: {

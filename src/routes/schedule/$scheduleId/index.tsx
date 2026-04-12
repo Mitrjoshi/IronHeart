@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader } from "@/components/ui/card";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useDeleteSchedule, useScheduleById } from "@/hooks/store/schedules";
+import { formatDuration, formatWeight } from "@/utils";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Play, Plus, Trash } from "lucide-react";
 
@@ -18,7 +19,7 @@ function RouteComponent() {
   const scheduleData = useScheduleById(scheduleId);
 
   const deleteSchedule = useDeleteSchedule();
-  const excercises = useExercisesBySchedule(scheduleId);
+  const exercises = useExercisesBySchedule(scheduleId);
 
   return (
     <>
@@ -52,26 +53,52 @@ function RouteComponent() {
       <div className="space-y-4 pt-20 pb-18">
         <div className="space-y-2 p-4 py-0">
           <div className="flex flex-col space-y-2">
-            {excercises.map((split) => (
+            {exercises.map((exercise) => (
               <Link
                 className="cursor-pointer"
-                key={split.id}
+                key={exercise.id}
                 to="/schedule/$scheduleId/excercise/$excerciseId"
                 params={{
-                  scheduleId: scheduleId,
-                  excerciseId: split.id,
+                  scheduleId,
+                  excerciseId: exercise.id,
                 }}
               >
                 <Card>
                   <CardHeader className="flex items-center justify-between">
                     <div>
-                      <p>{split.name}</p>
+                      <p>{exercise.name}</p>
                       <CardDescription className="flex items-center gap-1">
-                        <p className="text-sm">{split.numberOfSets} Sets</p>
-                        <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                        <p>{split.totalReps} Reps</p>
-                        <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                        <p>{split.maxWeight} kg</p>
+                        <p className="text-sm">{exercise.numberOfSets} Sets</p>
+
+                        {exercise.type === "weighted" && (
+                          <>
+                            <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
+                            <p>{exercise.totalReps} Reps</p>
+                            <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
+                            <p>{formatWeight(exercise.maxWeight)}</p>
+                          </>
+                        )}
+
+                        {exercise.type === "bodyweight" && (
+                          <>
+                            <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
+                            <p>{exercise.totalReps} Reps</p>
+                          </>
+                        )}
+
+                        {exercise.type === "duration" && (
+                          <>
+                            <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
+                            <p>
+                              {formatDuration(
+                                exercise.lastWorkoutSets?.reduce(
+                                  (sum, s) => sum + (s.duration ?? 0),
+                                  0,
+                                ) ?? 0,
+                              )}
+                            </p>
+                          </>
+                        )}
                       </CardDescription>
                     </div>
                   </CardHeader>
@@ -85,9 +112,7 @@ function RouteComponent() {
           onClick={() => {
             navigate({
               to: "/schedule/$scheduleId/excercise",
-              params: {
-                scheduleId: scheduleId,
-              },
+              params: { scheduleId },
             });
           }}
           className="fixed right-4 bottom-4 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"

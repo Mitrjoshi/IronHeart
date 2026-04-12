@@ -13,18 +13,264 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { useAllExercisesProgress } from "@/hooks/store/useWeeklyStats";
-import { capitalize, formatVolume } from "@/utils";
+import {
+  capitalize,
+  formatDuration,
+  formatVolume,
+  formatWeight,
+} from "@/utils";
 import { createFileRoute } from "@tanstack/react-router";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 export const Route = createFileRoute("/report")({
   component: RouteComponent,
 });
 
-const chartConfig = {
+const weightedConfig = {
   maxWeight: { label: "Max Weight (kg)", color: "var(--chart-1)" },
   totalVolume: { label: "Volume", color: "var(--chart-2)" },
 } satisfies ChartConfig;
+
+const durationConfig = {
+  totalDuration: { label: "Duration (s)", color: "var(--chart-1)" },
+} satisfies ChartConfig;
+
+const bodyweightConfig = {
+  totalReps: { label: "Total Reps", color: "var(--chart-1)" },
+} satisfies ChartConfig;
+
+function ScheduleSection({
+  schedule,
+}: {
+  schedule: ReturnType<typeof useAllExercisesProgress>[0];
+}) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="space-y-2">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center justify-between"
+      >
+        <p className="font-semibold">
+          {capitalize(schedule.scheduleDay)} — {schedule.scheduleName}
+        </p>
+        <ChevronDown
+          size={18}
+          className={`text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="space-y-2">
+          {schedule.exercises.length === 0 ? (
+            <Card>
+              <CardContent>
+                <p className="text-muted-foreground text-center">
+                  No workout data yet for this schedule.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            schedule.exercises.map((exercise) => (
+              <Card key={exercise.exerciseId}>
+                <CardHeader>
+                  <p className="font-medium">{exercise.name}</p>
+                  <CardDescription className="flex items-center gap-2">
+                    {exercise.type === "weighted" && (
+                      <>
+                        <span>PR: {formatWeight(exercise.allTimePR)}</span>
+                        <span className="bg-muted-foreground size-1 rounded-full" />
+                        <span>{exercise.totalSessions} sessions</span>
+                        {exercise.latestSession && (
+                          <>
+                            <span className="bg-muted-foreground size-1 rounded-full" />
+                            <span>
+                              Last:{" "}
+                              {formatVolume(exercise.latestSession.totalVolume)}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
+                    {exercise.type === "bodyweight" && (
+                      <>
+                        <span>{exercise.totalSessions} sessions</span>
+                        {exercise.latestSession && (
+                          <>
+                            <span className="bg-muted-foreground size-1 rounded-full" />
+                            <span>
+                              Last: {exercise.latestSession.totalReps} reps
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
+                    {exercise.type === "duration" && (
+                      <>
+                        <span>{exercise.totalSessions} sessions</span>
+                        {exercise.latestSession && (
+                          <>
+                            <span className="bg-muted-foreground size-1 rounded-full" />
+                            <span>
+                              Last:{" "}
+                              {formatDuration(
+                                exercise.latestSession.totalDuration,
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                  {exercise.progress.length < 2 ? (
+                    <p className="text-muted-foreground text-center text-sm">
+                      Complete at least 2 workouts to see progress.
+                    </p>
+                  ) : exercise.type === "weighted" ? (
+                    <ChartContainer config={weightedConfig}>
+                      <LineChart
+                        data={exercise.progress.map((p) => ({
+                          date: new Date(p!.finishedAt).toLocaleDateString(
+                            "en-IN",
+                            { day: "numeric", month: "short" },
+                          ),
+                          maxWeight: p!.maxWeight,
+                          totalVolume: p!.totalVolume,
+                        }))}
+                      >
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                        />
+                        <YAxis
+                          yAxisId="weight"
+                          orientation="left"
+                          tickLine={false}
+                          axisLine={false}
+                          width={30}
+                        />
+                        <YAxis
+                          yAxisId="volume"
+                          orientation="right"
+                          tickLine={false}
+                          axisLine={false}
+                          width={45}
+                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}t`}
+                        />
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Line
+                          yAxisId="weight"
+                          dataKey="maxWeight"
+                          type="monotone"
+                          stroke="var(--color-maxWeight)"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                        <Line
+                          yAxisId="volume"
+                          dataKey="totalVolume"
+                          type="monotone"
+                          stroke="var(--color-totalVolume)"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  ) : exercise.type === "duration" ? (
+                    <ChartContainer config={durationConfig}>
+                      <LineChart
+                        data={exercise.progress.map((p) => ({
+                          date: new Date(p!.finishedAt).toLocaleDateString(
+                            "en-IN",
+                            { day: "numeric", month: "short" },
+                          ),
+                          totalDuration: p!.totalDuration,
+                        }))}
+                      >
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          width={40}
+                          tickFormatter={(v) => `${v}s`}
+                        />
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Line
+                          dataKey="totalDuration"
+                          type="monotone"
+                          stroke="var(--color-totalDuration)"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  ) : (
+                    <ChartContainer config={bodyweightConfig}>
+                      <LineChart
+                        data={exercise.progress.map((p) => ({
+                          date: new Date(p!.finishedAt).toLocaleDateString(
+                            "en-IN",
+                            { day: "numeric", month: "short" },
+                          ),
+                          totalReps: p!.totalReps,
+                        }))}
+                      >
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                        />
+                        <YAxis tickLine={false} axisLine={false} width={30} />
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Line
+                          dataKey="totalReps"
+                          type="monotone"
+                          stroke="var(--color-totalReps)"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function RouteComponent() {
   const schedules = useAllExercisesProgress();
@@ -34,113 +280,7 @@ function RouteComponent() {
       <Header showBack subtitle="Detailed Report" title="Report" />
 
       <div className="space-y-6 px-4 pt-20 pb-4">
-        {schedules.map((schedule) => (
-          <div key={schedule.scheduleId} className="space-y-3">
-            <p className="font-semibold">
-              {capitalize(schedule.scheduleDay)} — {schedule.scheduleName}
-            </p>
-
-            {schedule.exercises.length === 0 ? (
-              <Card>
-                <CardContent>
-                  <p className="text-muted-foreground text-center">
-                    No workout data yet for this schedule.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              schedule.exercises.map((exercise) => (
-                <Card key={exercise.exerciseId}>
-                  <CardHeader>
-                    <p className="font-medium">{exercise.name}</p>
-                    <CardDescription className="flex items-center gap-2">
-                      <span>PR: {exercise.allTimePR}kg</span>
-                      <span className="bg-muted-foreground size-1 rounded-full" />
-                      <span>{exercise.totalSessions} sessions</span>
-                      {exercise.latestSession && (
-                        <>
-                          <span className="bg-muted-foreground size-1 rounded-full" />
-                          <span>
-                            Last:{" "}
-                            {formatVolume(exercise.latestSession.totalVolume)}
-                          </span>
-                        </>
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent>
-                    {exercise.progress.length < 2 ? (
-                      <p className="text-muted-foreground text-center text-sm">
-                        Complete at least 2 workouts to see progress.
-                      </p>
-                    ) : (
-                      <ChartContainer config={chartConfig}>
-                        <LineChart
-                          data={exercise.progress.map((p) => ({
-                            date: new Date(p!.finishedAt).toLocaleDateString(
-                              "en-IN",
-                              { day: "numeric", month: "short" },
-                            ),
-                            maxWeight: p!.maxWeight,
-                            totalVolume: p!.totalVolume,
-                          }))}
-                        >
-                          <CartesianGrid vertical={false} />
-                          <XAxis
-                            dataKey="date"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                          />
-                          <YAxis
-                            yAxisId="weight"
-                            orientation="left"
-                            tickLine={false}
-                            axisLine={false}
-                            width={30}
-                          />
-                          <YAxis
-                            yAxisId="volume"
-                            orientation="right"
-                            tickLine={false}
-                            axisLine={false}
-                            width={45}
-                            tickFormatter={(v) => `${(v / 1000).toFixed(0)}t`}
-                          />
-                          <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent />}
-                          />
-                          <Line
-                            yAxisId="weight"
-                            dataKey="maxWeight"
-                            type="monotone"
-                            stroke="var(--color-maxWeight)"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                          />
-                          <Line
-                            yAxisId="volume"
-                            dataKey="totalVolume"
-                            type="monotone"
-                            stroke="var(--color-totalVolume)"
-                            strokeWidth={2}
-                            dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
-                          />
-                        </LineChart>
-                      </ChartContainer>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        ))}
-
-        {schedules.length === 0 && (
+        {schedules.length === 0 ? (
           <Card>
             <CardContent>
               <p className="text-muted-foreground text-center">
@@ -148,6 +288,10 @@ function RouteComponent() {
               </p>
             </CardContent>
           </Card>
+        ) : (
+          schedules.map((schedule) => (
+            <ScheduleSection key={schedule.scheduleId} schedule={schedule} />
+          ))
         )}
       </div>
     </AppLayout>

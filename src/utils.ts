@@ -26,3 +26,8 @@ export const formatVolume = (volume: number) => {
   if (volume >= 1000) return `${(volume / 1000).toFixed(1)}t`;
   return `${volume}kg`;
 };
+
+export const formatWeight = (kg: number) => {
+  if (kg === 0) return "0kg";
+  return `${kg}kg`;
+};
