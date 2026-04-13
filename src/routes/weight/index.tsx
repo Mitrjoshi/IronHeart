@@ -25,6 +25,7 @@ import {
   YAxis,
 } from "recharts";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/weight/")({
   component: RouteComponent,
@@ -71,6 +72,7 @@ function RouteComponent() {
       age: Number(age) || 0,
       targetWeight: Number(targetWeight) || 0,
     });
+    toast.success("Profile updated");
   };
 
   const chartData = history.map((entry, i) => {

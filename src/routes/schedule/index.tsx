@@ -20,7 +20,7 @@ function RouteComponent() {
     <AppLayout>
       <Header showBack title="Schedule" subtitle="Workout Tracker" />
 
-      <div className="h-screen space-y-4 pt-20 pb-18">
+      <div className="space-y-4 pt-20 pb-18">
         <div className="space-y-2 p-4 py-0">
           <div className="flex flex-col space-y-2">
             {schedules.map((split) => (
