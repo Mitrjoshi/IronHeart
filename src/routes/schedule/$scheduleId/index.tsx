@@ -137,10 +137,14 @@ function RouteComponent() {
   const deleteSchedule = useDeleteSchedule();
   const exercises = useExercisesBySchedule(scheduleId);
 
+  const isTouchDevice =
+    typeof window !== "undefined" && "ontouchstart" in window;
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
+    useSensor(isTouchDevice ? TouchSensor : PointerSensor, {
+      activationConstraint: isTouchDevice
+        ? { delay: 150, tolerance: 8 }
+        : { distance: 8 },
     }),
   );
 
