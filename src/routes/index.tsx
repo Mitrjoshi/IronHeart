@@ -111,28 +111,56 @@ function RouteComponent() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Bench Press, Incline Dumbbell Press, Chest Flyes, Push-ups.
+                    {todaySchedules[0].exercises}
                   </CardDescription>
-                  <CardDescription>
-                    4 exercises - 20 sets - 200 reps)
-                  </CardDescription>
+                  {!todaySchedules[0].isDone && (
+                    <CardDescription className="flex items-center gap-1">
+                      <span>{todaySchedules[0].exerciseCount} exercises</span>
+                      <span className="bg-muted-foreground size-1 rounded-full" />
+                      <span>{todaySchedules[0].totalSets} sets</span>
+                      {todaySchedules[0].totalReps > 0 && (
+                        <>
+                          <span className="bg-muted-foreground size-1 rounded-full" />
+                          <span>{todaySchedules[0].totalReps} reps</span>
+                        </>
+                      )}
+                      {todaySchedules[0].totalDuration > 0 && (
+                        <>
+                          <span className="bg-muted-foreground size-1 rounded-full" />
+                          <span>
+                            {formatDuration(todaySchedules[0].totalDuration)}
+                          </span>
+                        </>
+                      )}
+                    </CardDescription>
+                  )}
                 </CardContent>
-                <CardFooter>
-                  <Button
-                    onClick={() => {
-                      navigate({
-                        to: "/schedule/$scheduleId/start",
-                        params: {
-                          scheduleId: todaySchedules[0].id,
-                        },
-                      });
-                    }}
-                    className="w-full"
-                    size={"lg"}
-                  >
-                    Start Workout
-                  </Button>
-                </CardFooter>
+
+                {todaySchedules[0].isDone ? (
+                  <CardContent className="flex flex-col items-center gap-1 py-2">
+                    <p className="text-4xl">🏆</p>
+                    <p className="font-semibold">Crushed it!</p>
+                    <p className="text-muted-foreground text-center text-sm">
+                      You've completed today's workout. Rest up and come back
+                      stronger.
+                    </p>
+                  </CardContent>
+                ) : (
+                  <CardFooter>
+                    <Button
+                      onClick={() =>
+                        navigate({
+                          to: "/schedule/$scheduleId/start",
+                          params: { scheduleId: todaySchedules[0].id },
+                        })
+                      }
+                      className="w-full"
+                      size="lg"
+                    >
+                      Start Workout
+                    </Button>
+                  </CardFooter>
+                )}
               </>
             ) : (
               <>
@@ -230,21 +258,19 @@ function RouteComponent() {
         <div className="space-y-2 p-4 py-0">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">Workout History</p>
-            {workoutHistory.length > 3 && (
-              <Button
-                onClick={() => {
-                  navigate({
-                    to: "/history",
-                  });
-                }}
-                variant="link"
-                className="text-muted-foreground underline"
-                size="sm"
-              >
-                View All
-                <ChevronRight />
-              </Button>
-            )}
+            <Button
+              onClick={() => {
+                navigate({
+                  to: "/history",
+                });
+              }}
+              variant="link"
+              className="text-muted-foreground underline"
+              size="sm"
+            >
+              View All
+              <ChevronRight />
+            </Button>
           </div>
           <div className="space-y-2">
             {workoutHistory.length > 0 ? (
@@ -292,42 +318,6 @@ function RouteComponent() {
               </Card>
             )}
           </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-2 p-4 py-0">
-          <p className="text-muted-foreground">Weight Progress</p>
-          {/* <Card>
-            <CardContent className="flex items-center justify-between">
-              <div>
-                <p>71kg</p>
-              </div>
-              <div>
-                <p>80kgs</p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" size={"lg"}>
-                Update Weight
-              </Button>
-            </CardFooter>
-          </Card> */}
-
-          <Card>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground text-center">
-                Track your weight progress to see how you're progressing towards
-                your
-              </p>
-            </CardContent>
-
-            <CardFooter>
-              <Button className="w-full" size="lg">
-                <p>Add Weight</p>
-              </Button>
-            </CardFooter>
-          </Card>
         </div>
       </div>
     </AppLayout>

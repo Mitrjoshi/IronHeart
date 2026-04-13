@@ -79,22 +79,120 @@ const DAYS = [
 export const useSchedulesToday = () => {
   const today = DAYS[new Date().getDay()];
   const ids = useRowIds("schedules", store);
+  const exerciseIds = useRowIds("exercises", store);
+  const workoutIds = useRowIds("workouts", store);
+  const setIds = useRowIds("sets", store);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
 
   return ids.reduce(
     (acc, id) => {
       const day = store.getCell("schedules", id, "day") as string;
 
       if (day === today) {
+        const scheduleExercises = exerciseIds.filter(
+          (exerciseId) =>
+            store.getCell("exercises", exerciseId, "scheduleId") === id,
+        );
+
+        const exercises = scheduleExercises
+          .map(
+            (exerciseId) =>
+              store.getCell("exercises", exerciseId, "name") as string,
+          )
+          .join(", ");
+
+        const exerciseCount = scheduleExercises.length;
+
+        const scheduleSets = setIds.filter((setId) =>
+          scheduleExercises.includes(
+            store.getCell("sets", setId, "exerciseId") as string,
+          ),
+        );
+
+        const totalSets = scheduleSets.length;
+
+        // split sets by exercise type
+        const repSets = scheduleSets.filter((setId) => {
+          const exerciseId = store.getCell(
+            "sets",
+            setId,
+            "exerciseId",
+          ) as string;
+          const type = store.getCell("exercises", exerciseId, "type") as string;
+          return type === "weighted" || type === "bodyweight";
+        });
+
+        const durationSets = scheduleSets.filter((setId) => {
+          const exerciseId = store.getCell(
+            "sets",
+            setId,
+            "exerciseId",
+          ) as string;
+          const type = store.getCell("exercises", exerciseId, "type") as string;
+          return type === "duration";
+        });
+
+        const totalReps = repSets.reduce(
+          (sum, setId) =>
+            sum + (store.getCell("sets", setId, "reps") as number),
+          0,
+        );
+
+        const totalDuration = durationSets.reduce(
+          (sum, setId) =>
+            sum + (store.getCell("sets", setId, "duration") as number),
+          0,
+        );
+
+        const isDone = workoutIds.some((workoutId) => {
+          const finishedAt = store.getCell(
+            "workouts",
+            workoutId,
+            "finishedAt",
+          ) as number;
+          const scheduleId = store.getCell(
+            "workouts",
+            workoutId,
+            "scheduleId",
+          ) as string;
+
+          return (
+            scheduleId === id &&
+            finishedAt >= todayStart.getTime() &&
+            finishedAt <= todayEnd.getTime()
+          );
+        });
+
         acc.push({
           id,
           day,
           name: store.getCell("schedules", id, "name") as string,
+          exercises,
+          exerciseCount,
+          totalSets,
+          totalReps,
+          totalDuration,
+          isDone,
         });
       }
 
       return acc;
     },
-    [] as { id: string; name: string; day: string }[],
+    [] as {
+      id: string;
+      name: string;
+      day: string;
+      exercises: string;
+      exerciseCount: number;
+      totalSets: number;
+      totalReps: number;
+      totalDuration: number;
+      isDone: boolean;
+    }[],
   );
 };
 

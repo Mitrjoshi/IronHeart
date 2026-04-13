@@ -54,7 +54,7 @@ function ScheduleSection({
         onClick={() => setOpen((p) => !p)}
         className="flex w-full items-center justify-between"
       >
-        <p className="font-semibold">
+        <p className="truncate font-semibold">
           {capitalize(schedule.scheduleDay)} — {schedule.scheduleName}
         </p>
         <ChevronDown
@@ -64,7 +64,7 @@ function ScheduleSection({
       </button>
 
       {open && (
-        <div className="space-y-2">
+        <div className="w-full space-y-2">
           {schedule.exercises.length === 0 ? (
             <Card>
               <CardContent>
@@ -77,7 +77,7 @@ function ScheduleSection({
             schedule.exercises.map((exercise) => (
               <Card key={exercise.exerciseId}>
                 <CardHeader>
-                  <p className="font-medium">{exercise.name}</p>
+                  <p className="truncate font-medium">{exercise.name}</p>
                   <CardDescription className="flex items-center gap-2">
                     {exercise.type === "weighted" && (
                       <>
@@ -279,7 +279,7 @@ function RouteComponent() {
     <AppLayout>
       <Header showBack subtitle="Detailed Report" title="Report" />
 
-      <div className="space-y-6 px-4 pt-20 pb-4">
+      <div className="h-full space-y-6 px-4 pt-20 pb-4">
         {schedules.length === 0 ? (
           <Card>
             <CardContent>

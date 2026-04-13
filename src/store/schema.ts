@@ -43,6 +43,19 @@ store.setTablesSchema({
     exerciseSets: { type: "string" }, // JSON stringified
     savedAt: { type: "number" },
   },
+  weights: {
+    value: { type: "number" }, // kg
+    note: { type: "string" },
+    loggedAt: { type: "number" }, // timestamp
+  },
+  // in schema
+  settings: {
+    weightUnit: { type: "string" },
+    theme: { type: "string" },
+    height: { type: "number" },
+    age: { type: "number" },
+    targetWeight: { type: "number" },
+  },
 });
 
 const persister = createLocalPersister(store, "schedule-store");

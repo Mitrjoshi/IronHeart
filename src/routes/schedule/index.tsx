@@ -32,11 +32,9 @@ function RouteComponent() {
               >
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <p>
-                        {capitalize(split.day)} - {split.name}
-                      </p>
-                    </div>
+                    <p className="truncate">
+                      {capitalize(split.day)} - {split.name}
+                    </p>
                     <CardDescription className="line-clamp-2">
                       {split.exercises}
                     </CardDescription>
@@ -53,10 +51,10 @@ function RouteComponent() {
               to: "/schedule/create",
             });
           }}
-          className="fixed right-4 bottom-22 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"
+          className="fixed right-4 bottom-22 z-10 size-14 cursor-pointer rounded-full shadow-2xl shadow-black"
           size="icon-lg"
         >
-          <Plus className="size-10" />
+          <Plus className="size-8" />
         </Button>
       </div>
     </AppLayout>

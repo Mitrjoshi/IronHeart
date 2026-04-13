@@ -216,10 +216,10 @@ function RouteComponent() {
               params: { scheduleId },
             })
           }
-          className="fixed right-4 bottom-4 z-10 size-16 cursor-pointer rounded-full shadow-2xl shadow-black"
+          className="fixed right-4 bottom-4 z-10 size-14 cursor-pointer rounded-full shadow-2xl shadow-black"
           size="icon-lg"
         >
-          <Plus className="size-10" />
+          <Plus className="size-8" />
         </Button>
       </div>
     </>

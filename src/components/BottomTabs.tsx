@@ -1,17 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChartLine, Dumbbell, House } from "lucide-react";
+import { ChartLine, Dumbbell, House, Weight } from "lucide-react";
 
 const tabs = [
   { to: "/", label: "Home", icon: House },
   { to: "/schedule", label: "Schedule", icon: Dumbbell },
   { to: "/report", label: "Report", icon: ChartLine },
+  { to: "/weight", label: "Weight", icon: Weight },
 ];
 
 export const BottomTabs = () => {
   const { location } = useRouterState();
 
   return (
-    <div className="bg-background sticky bottom-0 border-t">
+    <div className="bg-background sticky bottom-0 w-full border-t">
       <div className="flex items-center justify-around p-2">
         {tabs.map(({ to, label, icon: Icon }) => {
           const isActive =

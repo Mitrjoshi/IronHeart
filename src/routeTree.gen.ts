@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WeightIndexRouteImport } from './routes/weight/index'
 import { Route as ScheduleIndexRouteImport } from './routes/schedule/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
 import { Route as ScheduleScheduleIdIndexRouteImport } from './routes/schedule/$scheduleId/index'
@@ -32,6 +33,11 @@ const HistoryRoute = HistoryRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WeightIndexRoute = WeightIndexRouteImport.update({
+  id: '/weight/',
+  path: '/weight/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleIndexRoute = ScheduleIndexRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
+  '/weight/': typeof WeightIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
   '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule': typeof ScheduleIndexRoute
+  '/weight': typeof WeightIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
   '/schedule/$scheduleId': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/schedule/': typeof ScheduleIndexRoute
+  '/weight/': typeof WeightIndexRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
   '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/schedule/create'
     | '/schedule/'
+    | '/weight/'
     | '/schedule/$scheduleId/start'
     | '/schedule/$scheduleId/'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/schedule/create'
     | '/schedule'
+    | '/weight'
     | '/schedule/$scheduleId/start'
     | '/schedule/$scheduleId'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/schedule/create'
     | '/schedule/'
+    | '/weight/'
     | '/schedule/$scheduleId/start'
     | '/schedule/$scheduleId/'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   ScheduleIndexRoute: typeof ScheduleIndexRoute
+  WeightIndexRoute: typeof WeightIndexRoute
   ScheduleScheduleIdStartRoute: typeof ScheduleScheduleIdStartRoute
   ScheduleScheduleIdIndexRoute: typeof ScheduleScheduleIdIndexRoute
   ScheduleScheduleIdExcerciseExcerciseIdRoute: typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/weight/': {
+      id: '/weight/'
+      path: '/weight'
+      fullPath: '/weight/'
+      preLoaderRoute: typeof WeightIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule/': {
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   ScheduleIndexRoute: ScheduleIndexRoute,
+  WeightIndexRoute: WeightIndexRoute,
   ScheduleScheduleIdStartRoute: ScheduleScheduleIdStartRoute,
   ScheduleScheduleIdIndexRoute: ScheduleScheduleIdIndexRoute,
   ScheduleScheduleIdExcerciseExcerciseIdRoute:

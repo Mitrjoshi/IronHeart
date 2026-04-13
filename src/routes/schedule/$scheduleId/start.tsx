@@ -348,7 +348,7 @@ function RouteComponent() {
                   className="w-full"
                   onClick={() => addSet(exercise.id)}
                 >
-                  <Plus size={16} />
+                  <Plus size={12} />
                   <p>Add Set</p>
                 </Button>
               </CardFooter>
