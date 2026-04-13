@@ -110,9 +110,6 @@ function RouteComponent() {
                   <p className="text-lg font-bold">{todaySchedules[0]?.name}</p>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
-                    {todaySchedules[0].exercises}
-                  </CardDescription>
                   {!todaySchedules[0].isDone && (
                     <CardDescription className="flex items-center gap-1">
                       <span>{todaySchedules[0].exerciseCount} exercises</span>
