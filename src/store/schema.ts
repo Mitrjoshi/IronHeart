@@ -56,6 +56,28 @@ store.setTablesSchema({
     age: { type: "number" },
     targetWeight: { type: "number" },
   },
+
+  meals: {
+    name: { type: "string" }, // breakfast, lunch, etc.
+    loggedAt: { type: "number" },
+  },
+
+  foodEntries: {
+    mealId: { type: "string" },
+
+    foodCode: { type: "string" }, // ASC001
+    foodName: { type: "string" },
+
+    quantity: { type: "number" }, // user input (e.g. 150)
+    unit: { type: "string" }, // ml, g, cup, etc.
+
+    calories: { type: "number" },
+    protein: { type: "number" },
+    carbs: { type: "number" },
+    fats: { type: "number" },
+
+    createdAt: { type: "number" },
+  },
 });
 
 const persister = createLocalPersister(store, "schedule-store");
