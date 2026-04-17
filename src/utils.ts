@@ -46,7 +46,7 @@ function getMeasurement(unit: string) {
   return null; // fallback
 }
 
-export function normalizeFood(food) {
+export function normalizeFood(food: any) {
   const baseQuantity = 100;
 
   const energy = food.energy_kcal ?? 0;
@@ -59,6 +59,7 @@ export function normalizeFood(food) {
 
   return {
     name: food.food_name,
+    food_code: food.food_code,
 
     base: {
       quantity: 100,

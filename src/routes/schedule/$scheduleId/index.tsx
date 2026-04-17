@@ -1,6 +1,11 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useDeleteSchedule, useScheduleById } from "@/hooks/store/schedules";
 import { formatDuration, formatWeight } from "@/utils";
@@ -79,7 +84,7 @@ function SortableExerciseCard({
         <Card>
           <CardHeader className="flex items-center justify-between">
             <div className="flex-1">
-              <p>{exercise.name}</p>
+              <CardTitle>{exercise.name}</CardTitle>
               <CardDescription className="flex items-center gap-1">
                 <p className="text-sm">{exercise.numberOfSets} Sets</p>
 

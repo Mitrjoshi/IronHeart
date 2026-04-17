@@ -1,7 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useAllSchedules } from "@/hooks/store/schedules";
 import { capitalize } from "@/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -32,9 +37,9 @@ function RouteComponent() {
               >
                 <Card>
                   <CardHeader>
-                    <p className="truncate">
+                    <CardTitle className="truncate">
                       {capitalize(split.day)} - {split.name}
-                    </p>
+                    </CardTitle>
                     <CardDescription className="line-clamp-2">
                       {split.exercises}
                     </CardDescription>

@@ -1,18 +1,17 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { FOODS } from "@/constants/foods";
 import { normalizeFood } from "@/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import React from "react";
 
 export const Route = createFileRoute("/food/")({
@@ -20,6 +19,7 @@ export const Route = createFileRoute("/food/")({
 });
 
 function RouteComponent() {
+  const navigate = Route.useNavigate();
   const [searchTerm, setSearchTerm] = React.useState("");
 
   const NORMALIZED_FOODS = React.useMemo(
@@ -47,9 +47,20 @@ function RouteComponent() {
 
         <div className="space-y-2 px-4 pb-4">
           {NORMALIZED_FOODS.map((food) => (
-            <Card key={food.name}>
+            <Card
+              onClick={() => {
+                navigate({
+                  to: "/food/$foodId",
+                  params: {
+                    foodId: food.food_code,
+                  },
+                });
+              }}
+              key={food.name}
+              className="cursor-pointer"
+            >
               <CardHeader>
-                {food.name}
+                <CardTitle>{food.name}</CardTitle>
                 <CardDescription>
                   {food.serving.calories.toFixed(0)} kcal per{" "}
                   {food.serving.unit}

@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -220,7 +221,7 @@ function RouteComponent() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      {exercise.name}
+                      <CardTitle>{exercise.name}</CardTitle>
                       <CardDescription>{exercise.type}</CardDescription>
                     </div>
                     <Button

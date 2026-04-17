@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -107,7 +108,7 @@ function RouteComponent() {
             {todaySchedules.length > 0 ? (
               <>
                 <CardHeader>
-                  <p className="text-lg font-bold">{todaySchedules[0]?.name}</p>
+                  <CardTitle>{todaySchedules[0]?.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!todaySchedules[0].isDone && (
@@ -212,9 +213,9 @@ function RouteComponent() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <p>
+                      <CardTitle>
                         {capitalize(split.day)} - {split.name}
-                      </p>
+                      </CardTitle>
                       <p className="text-muted-foreground">
                         ({split.estimatedMinutes} mins)
                       </p>

@@ -1,7 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -98,7 +98,7 @@ function RouteComponent() {
         {/* profile setup */}
         <Card>
           <CardHeader>
-            <p className="font-semibold">Profile</p>
+            <CardTitle>Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex gap-2">
@@ -148,7 +148,7 @@ function RouteComponent() {
         {/* log weight */}
         <Card>
           <CardHeader>
-            <p className="font-semibold">Log Weight</p>
+            <CardTitle>Log Weight</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex gap-2">
@@ -265,7 +265,7 @@ function RouteComponent() {
             {insights.targetProgress && (
               <Card>
                 <CardHeader>
-                  <p className="font-semibold">Target Progress</p>
+                  <CardTitle>Target Progress</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -297,7 +297,7 @@ function RouteComponent() {
         {history.length >= 2 ? (
           <Card>
             <CardHeader>
-              <p className="font-semibold">Progress</p>
+              <CardTitle>Progress</CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig}>
@@ -366,7 +366,7 @@ function RouteComponent() {
         {history.length > 0 && (
           <Card>
             <CardHeader>
-              <p className="font-semibold">History</p>
+              <CardTitle>History</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {[...history].reverse().map((entry) => (

@@ -39,7 +39,7 @@ export function Header({
         )}
 
         <div className="flex min-w-0 flex-col">
-          {title && <div className="truncate text-2xl font-bold">{title}</div>}
+          {title && <div className="truncate text-xl font-bold">{title}</div>}
           {subtitle && (
             <div className="text-muted-foreground truncate text-xs">
               {subtitle}
