@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { FOODS } from "@/constants/foods";
 import { normalizeFood } from "@/utils";
 import { createFileRoute } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import React from "react";
 
 export const Route = createFileRoute("/food/")({
@@ -60,7 +61,10 @@ function RouteComponent() {
               className="cursor-pointer"
             >
               <CardHeader>
-                <CardTitle>{food.name}</CardTitle>
+                <div className="flex items-center justify-between gap-4">
+                  <CardTitle>{food.name}</CardTitle>
+                  <ChevronRight className="text-muted-foreground" size={18} />
+                </div>
                 <CardDescription>
                   {food.serving.calories.toFixed(0)} kcal per{" "}
                   {food.serving.unit}
