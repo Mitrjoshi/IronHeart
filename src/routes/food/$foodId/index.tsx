@@ -10,11 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { FOODS } from "@/constants/foods";
 import { normalizeFood } from "@/utils";
-import {
-  createFileRoute,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { useAddFoodEntry, useGetOrCreateMeal } from "@/hooks/store/food";
