@@ -10,7 +10,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { FOODS } from "@/constants/foods";
 import { normalizeFood } from "@/utils";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { useAddFoodEntry, useGetOrCreateMeal } from "@/hooks/store/food";
@@ -24,7 +28,7 @@ type MealType = (typeof MEAL_OPTIONS)[number];
 
 function RouteComponent() {
   const foodId = Route.useParams().foodId;
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const [microTab, setMicroTab] = React.useState<
     "fats" | "minerals" | "vitamins"
@@ -68,7 +72,7 @@ function RouteComponent() {
       fats: scaled.fats,
     });
     setAdding(false);
-    navigate({ to: "/", replace: true });
+    router.history.back();
   };
 
   const microFats = [
