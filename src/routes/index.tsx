@@ -25,6 +25,7 @@ import { ChevronRight, Plus } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
 import { store } from "@/store/schema";
+import { useNutritionTargets } from "@/hooks/store/weight";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -34,14 +35,6 @@ export const Route = createFileRoute("/")({
   },
 });
 
-// Rough daily targets — swap for user settings later
-const TARGETS = {
-  calories: 2000,
-  protein: 150,
-  carbs: 250,
-  fats: 65,
-};
-
 function RouteComponent() {
   const navigate = Route.useNavigate();
 
@@ -49,6 +42,7 @@ function RouteComponent() {
   const todaySchedules = useSchedulesToday();
   const workoutHistory = useWorkoutHistory();
   const activeSessions = useActiveSessions();
+  const TARGETS = useNutritionTargets();
 
   const totals = useDailyTotals();
   const meals = useMealsForDay();
