@@ -26,6 +26,15 @@ type WeightInsights = {
   } | null;
 };
 
+// ── settings helpers ────────────────────────────────────────────────────────
+
+const getSettingsNum = (key: string): number | null => {
+  const val = store.getCell("settings", "user", key) as number | undefined;
+  return val && val > 0 ? val : null;
+};
+
+// ── weight hooks ────────────────────────────────────────────────────────────
+
 export const useLogWeight = () => {
   return (value: number, note = "") => {
     store.setRow("weights", uuid(), {
@@ -70,10 +79,9 @@ export const useWeightInsights = (): WeightInsights | null => {
 
   const latest = entries.at(-1)!;
   const earliest = entries[0];
-
   const now = Date.now();
 
-  // 7 day moving average
+  // 7-day moving average
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
   const last7 = entries.filter((e) => e.loggedAt >= sevenDaysAgo);
   const movingAverage =
@@ -81,7 +89,7 @@ export const useWeightInsights = (): WeightInsights | null => {
       ? last7.reduce((sum, e) => sum + e.value, 0) / last7.length
       : null;
 
-  // weekly change
+  // weekly change (compare last 7 vs previous 7)
   const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
   const prev7 = entries.filter(
     (e) => e.loggedAt >= fourteenDaysAgo && e.loggedAt < sevenDaysAgo,
@@ -93,20 +101,18 @@ export const useWeightInsights = (): WeightInsights | null => {
   const weeklyChange =
     movingAverage !== null && prevAvg !== null ? movingAverage - prevAvg : null;
 
-  // trend over last 30 days
+  // 30-day trend
   const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
   const last30 = entries.filter((e) => e.loggedAt >= thirtyDaysAgo);
   let trend: "up" | "down" | "flat" | null = null;
   if (last30.length >= 2) {
-    const first = last30[0].value;
-    const last = last30.at(-1)!.value;
-    const diff = last - first;
+    const diff = last30.at(-1)!.value - last30[0].value;
     if (diff > 0.5) trend = "up";
     else if (diff < -0.5) trend = "down";
     else trend = "flat";
   }
 
-  // streak — consecutive days logged
+  // consecutive-day streak
   let streak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -115,13 +121,16 @@ export const useWeightInsights = (): WeightInsights | null => {
     dayStart.setDate(today.getDate() - i);
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(23, 59, 59, 999);
-
-    const hasEntry = entries.some(
-      (e) => e.loggedAt >= dayStart.getTime() && e.loggedAt <= dayEnd.getTime(),
-    );
-
-    if (hasEntry) streak++;
-    else break;
+    if (
+      entries.some(
+        (e) =>
+          e.loggedAt >= dayStart.getTime() && e.loggedAt <= dayEnd.getTime(),
+      )
+    ) {
+      streak++;
+    } else {
+      break;
+    }
   }
 
   // days since last log
@@ -129,26 +138,22 @@ export const useWeightInsights = (): WeightInsights | null => {
     (now - latest.loggedAt) / (1000 * 60 * 60 * 24),
   );
 
-  // BMI
-  const height = store.getCell("settings", "user", "height") as number;
+  // BMI — from settings
+  const height = getSettingsNum("height");
   const bmi =
     height && latest.value
       ? Math.round((latest.value / Math.pow(height / 100, 2)) * 10) / 10
       : null;
 
-  // target progress
-  const targetWeight = store.getCell(
-    "settings",
-    "user",
-    "targetWeight",
-  ) as number;
+  // target progress — from settings
+  const targetWeight = getSettingsNum("targetWeight");
   const targetProgress =
     targetWeight && earliest.value && earliest.value !== targetWeight
       ? {
           target: targetWeight,
           start: earliest.value,
           current: latest.value,
-          remaining: latest.value - targetWeight,
+          remaining: Math.round((latest.value - targetWeight) * 10) / 10,
           percentage: Math.min(
             100,
             Math.round(
@@ -171,5 +176,31 @@ export const useWeightInsights = (): WeightInsights | null => {
     daysSinceLastLog,
     bmi,
     targetProgress,
+  };
+};
+
+// ── settings-derived hooks (use these wherever you need profile data) ────────
+
+export const useUserSettings = () => {
+  return {
+    height: getSettingsNum("height"),
+    age: getSettingsNum("age"),
+    targetWeight: getSettingsNum("targetWeight"),
+    targetCalories: getSettingsNum("targetCalories"),
+    targetProtein: getSettingsNum("targetProtein"),
+    targetCarbs: getSettingsNum("targetCarbs"),
+    targetFats: getSettingsNum("targetFats"),
+    weightUnit:
+      (store.getCell("settings", "user", "weightUnit") as string) || "kg",
+    theme: (store.getCell("settings", "user", "theme") as string) || "system",
+  };
+};
+
+export const useNutritionTargets = () => {
+  return {
+    calories: getSettingsNum("targetCalories") ?? 2000,
+    protein: getSettingsNum("targetProtein") ?? 150,
+    carbs: getSettingsNum("targetCarbs") ?? 250,
+    fats: getSettingsNum("targetFats") ?? 65,
   };
 };

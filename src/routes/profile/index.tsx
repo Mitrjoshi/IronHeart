@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/weight/")({
+export const Route = createFileRoute("/profile/")({
   component: RouteComponent,
 });
 

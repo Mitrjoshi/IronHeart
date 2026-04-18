@@ -14,14 +14,28 @@ import { normalizeFood } from "@/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import React from "react";
+import { z } from "zod";
 
 export const Route = createFileRoute("/food/")({
   component: RouteComponent,
+  validateSearch: z.object({
+    search: z.string().catch(""),
+  }),
 });
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const searchTerm = Route.useSearch().search;
+
+  const [inputValue, setInputValue] = React.useState(searchTerm);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate({ search: { search: inputValue } });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   const NORMALIZED_FOODS = React.useMemo(
     () =>
@@ -39,8 +53,8 @@ function RouteComponent() {
         <div className="px-4">
           <Input
             placeholder="Search for food..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
           />
         </div>
 

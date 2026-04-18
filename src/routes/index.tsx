@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import {
   Card,
@@ -20,13 +20,27 @@ import {
 import { WeeklyGraph } from "@/components/WeeklyGraph";
 import { useActiveSessions } from "@/hooks/store/activeSession";
 import { useWorkoutHistory } from "@/hooks/store/workouts";
-import { ChevronRight } from "lucide-react";
+import { useDailyTotals, useMealsForDay } from "@/hooks/store/food";
+import { ChevronRight, Plus } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-export const description = "A bar chart";
+import { Progress } from "@/components/ui/progress";
+import { store } from "@/store/schema";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
+  beforeLoad: () => {
+    const calories = store.getCell("settings", "user", "targetCalories");
+    if (!calories) throw redirect({ to: "/onboarding" });
+  },
 });
+
+// Rough daily targets — swap for user settings later
+const TARGETS = {
+  calories: 2000,
+  protein: 150,
+  carbs: 250,
+  fats: 65,
+};
 
 function RouteComponent() {
   const navigate = Route.useNavigate();
@@ -34,8 +48,10 @@ function RouteComponent() {
   const schedules = useAllSchedules();
   const todaySchedules = useSchedulesToday();
   const workoutHistory = useWorkoutHistory();
-
   const activeSessions = useActiveSessions();
+
+  const totals = useDailyTotals();
+  const meals = useMealsForDay();
 
   return (
     <AppLayout>
@@ -48,20 +64,124 @@ function RouteComponent() {
             <CardContent>
               <WeeklyGraph />
             </CardContent>
-
             <CardFooter>
               <Button
-                onClick={() => {
-                  navigate({
-                    to: "/report",
-                  });
-                }}
+                onClick={() => navigate({ to: "/report" })}
                 className="w-full"
                 size="lg"
               >
                 View Detailed Report
               </Button>
             </CardFooter>
+          </Card>
+        </div>
+
+        <Separator />
+
+        {/* ── Daily nutrition summary ── */}
+        <div className="space-y-2 p-4 py-0">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">Today's Nutrition</p>
+            <Button
+              onClick={() =>
+                navigate({
+                  to: "/food",
+                  search: {
+                    search: "",
+                  },
+                })
+              }
+              variant="link"
+              className="text-muted-foreground underline"
+              size="sm"
+            >
+              Add Food
+              <Plus size={14} className="ml-1" />
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{totals.calories.toFixed(0)} kcal</CardTitle>
+                <p className="text-muted-foreground text-sm">
+                  / {TARGETS.calories} kcal
+                </p>
+              </div>
+              <CardDescription>
+                {(TARGETS.calories - totals.calories).toFixed(0)} kcal remaining
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              {[
+                {
+                  label: "Protein",
+                  value: totals.protein,
+                  target: TARGETS.protein,
+                  unit: "g",
+                  bar: "[&>div]:bg-blue-400",
+                  color: "text-blue-400",
+                },
+                {
+                  label: "Carbs",
+                  value: totals.carbs,
+                  target: TARGETS.carbs,
+                  unit: "g",
+                  bar: "[&>div]:bg-green-400",
+                  color: "text-green-400",
+                },
+                {
+                  label: "Fats",
+                  value: totals.fats,
+                  target: TARGETS.fats,
+                  unit: "g",
+                  bar: "[&>div]:bg-orange-400",
+                  color: "text-orange-400",
+                },
+              ].map(({ label, value, target, unit, bar, color }) => (
+                <div key={label} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className={`text-xs ${color}`}>{label}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {value.toFixed(1)}
+                      {unit} / {target}
+                      {unit}
+                    </span>
+                  </div>
+                  <Progress
+                    value={Math.min((value / target) * 100, 100)}
+                    className={bar}
+                  />
+                </div>
+              ))}
+            </CardContent>
+
+            {meals.length > 0 && (
+              <CardFooter className="flex flex-col items-start gap-2">
+                <Separator className="mb-1" />
+                {meals.map((meal) => (
+                  <div key={meal.id} className="w-full">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium capitalize">
+                        {meal.name}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {meal.entries
+                          .reduce((sum, e) => sum + e.calories, 0)
+                          .toFixed(0)}{" "}
+                        kcal
+                      </p>
+                    </div>
+                    {meal.entries.length > 0 && (
+                      <p className="text-muted-foreground text-xs">
+                        {meal.entries.map((e) => e.foodName).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </CardFooter>
+            )}
           </Card>
         </div>
 
@@ -168,14 +288,13 @@ function RouteComponent() {
                     schedule and add a workout for today.
                   </p>
                 </CardContent>
-
                 <CardFooter>
                   <Button
                     size="lg"
                     className="w-full"
                     onClick={() => navigate({ to: "/schedule/create" })}
                   >
-                    <p>Create Schedule</p>
+                    Create Schedule
                   </Button>
                 </CardFooter>
               </>
@@ -189,11 +308,7 @@ function RouteComponent() {
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">Workout Schedule</p>
             <Button
-              onClick={() => {
-                navigate({
-                  to: "/schedule",
-                });
-              }}
+              onClick={() => navigate({ to: "/schedule" })}
               variant="link"
               className="text-muted-foreground underline"
               size="sm"
@@ -234,13 +349,8 @@ function RouteComponent() {
                   You don't have any workout schedules yet. Click the button
                   below
                 </p>
-
                 <Button
-                  onClick={() => {
-                    navigate({
-                      to: "/schedule/create",
-                    });
-                  }}
+                  onClick={() => navigate({ to: "/schedule/create" })}
                   size="lg"
                   className="w-full cursor-pointer"
                 >
@@ -257,11 +367,7 @@ function RouteComponent() {
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">Workout History</p>
             <Button
-              onClick={() => {
-                navigate({
-                  to: "/history",
-                });
-              }}
+              onClick={() => navigate({ to: "/history" })}
               variant="link"
               className="text-muted-foreground underline"
               size="sm"
@@ -289,7 +395,6 @@ function RouteComponent() {
                         : "No exercises recorded"}
                     </CardDescription>
                   </CardHeader>
-
                   <CardFooter className="flex items-center justify-around">
                     <p className="text-muted-foreground text-center">
                       {workout.numberOfSets} sets

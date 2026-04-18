@@ -55,6 +55,10 @@ store.setTablesSchema({
     height: { type: "number" },
     age: { type: "number" },
     targetWeight: { type: "number" },
+    targetCalories: { type: "number" },
+    targetProtein: { type: "number" },
+    targetCarbs: { type: "number" },
+    targetFats: { type: "number" },
   },
 
   meals: {

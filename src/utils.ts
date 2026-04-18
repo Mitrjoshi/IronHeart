@@ -1,3 +1,5 @@
+import type { FoodItem } from "./constants/foods";
+
 export const capitalize = (str: string) =>
   str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -46,7 +48,7 @@ function getMeasurement(unit: string) {
   return null; // fallback
 }
 
-export function normalizeFood(food: any) {
+export function normalizeFood(food: FoodItem) {
   const baseQuantity = 100;
 
   const energy = food.energy_kcal ?? 0;
@@ -77,6 +79,7 @@ export function normalizeFood(food: any) {
       protein: food.unit_serving_protein_g ?? (food.protein_g ?? 0) * ratio,
       carbs: food.unit_serving_carb_g ?? (food.carb_g ?? 0) * ratio,
       fats: food.unit_serving_fat_g ?? (food.fat_g ?? 0) * ratio,
+      ...food,
     },
   };
 }

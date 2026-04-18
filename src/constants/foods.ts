@@ -1,4 +1,114 @@
-export const FOODS = [
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+export interface FoodItem {
+  food_code: string;
+  food_name: string;
+  primarysource: string;
+
+  // Energy (per 100g)
+  energy_kj: number;
+  energy_kcal: number;
+
+  // Macros (per 100g)
+  carb_g: number;
+  protein_g: number;
+  fat_g: number;
+  freesugar_g: number;
+  fibre_g: number;
+
+  // Fats (per 100g, in mg)
+  sfa_mg: number;
+  mufa_mg: number;
+  pufa_mg: number;
+  cholesterol_mg: number;
+
+  // Minerals (per 100g)
+  calcium_mg: number;
+  phosphorus_mg: number;
+  magnesium_mg: number;
+  sodium_mg: number;
+  potassium_mg: number;
+  iron_mg: number;
+  copper_mg: number;
+  selenium_ug: number;
+  chromium_mg: number;
+  manganese_mg: number;
+  molybdenum_mg: number;
+  zinc_mg: number;
+
+  // Vitamins (per 100g)
+  vita_ug: number;
+  vite_mg: number;
+  vitd2_ug: number;
+  vitd3_ug: number;
+  vitk1_ug: number;
+  vitk2_ug: number;
+  folate_ug: number;
+  vitb1_mg: number;
+  vitb2_mg: number;
+  vitb3_mg: number;
+  vitb5_mg: number;
+  vitb6_mg: number;
+  vitb7_ug: number;
+  vitb9_ug: number;
+  vitc_mg: number;
+  carotenoids_ug: number;
+
+  // Serving info
+  servings_unit: string;
+
+  // Energy (per serving)
+  unit_serving_energy_kj: number;
+  unit_serving_energy_kcal: number;
+
+  // Macros (per serving)
+  unit_serving_carb_g: number;
+  unit_serving_protein_g: number;
+  unit_serving_fat_g: number;
+  unit_serving_freesugar_g: number;
+  unit_serving_fibre_g: number;
+
+  // Fats (per serving, in mg)
+  unit_serving_sfa_mg: number;
+  unit_serving_mufa_mg: number;
+  unit_serving_pufa_mg: number;
+  unit_serving_cholesterol_mg: number;
+
+  // Minerals (per serving)
+  unit_serving_calcium_mg: number;
+  unit_serving_phosphorus_mg: number;
+  unit_serving_magnesium_mg: number;
+  unit_serving_sodium_mg: number;
+  unit_serving_potassium_mg: number;
+  unit_serving_iron_mg: number;
+  unit_serving_copper_mg: number;
+  unit_serving_selenium_ug: number;
+  unit_serving_chromium_mg: number;
+  unit_serving_manganese_mg: number;
+  unit_serving_molybdenum_mg: number;
+  unit_serving_zinc_mg: number;
+
+  // Vitamins (per serving)
+  unit_serving_vita_ug: number;
+  unit_serving_vite_mg: number;
+  unit_serving_vitd2_ug: number;
+  unit_serving_vitd3_ug: number;
+  unit_serving_vitk1_ug: number;
+  unit_serving_vitk2_ug: number;
+  unit_serving_folate_ug: number;
+  unit_serving_vitb1_mg: number;
+  unit_serving_vitb2_mg: number;
+  unit_serving_vitb3_mg: number;
+  unit_serving_vitb5_mg: number;
+  unit_serving_vitb6_mg: number;
+  unit_serving_vitb7_ug: number;
+  unit_serving_vitb9_ug: number;
+  unit_serving_vitc_mg: number;
+  unit_serving_carotenoids_ug: number;
+}
+
+export const FOODS: FoodItem[] = [
   {
     food_code: "ASC001",
     food_name: "Hot tea (Garam Chai)",
