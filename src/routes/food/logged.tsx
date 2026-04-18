@@ -10,9 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useMealEntriesByType, useMealTotals } from "@/hooks/store/food";
-import { Trash, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useDeleteFoodEntry } from "@/hooks/store/food";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/food/logged")({
   component: RouteComponent,
