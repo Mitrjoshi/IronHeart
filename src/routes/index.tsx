@@ -153,7 +153,6 @@ function RouteComponent() {
 
             {meals.length > 0 && (
               <CardFooter className="flex flex-col items-start gap-2">
-                <Separator className="mb-1" />
                 {meals.map((meal) => (
                   <div key={meal.id} className="w-full">
                     <div className="flex items-center justify-between">
@@ -174,6 +173,20 @@ function RouteComponent() {
                     )}
                   </div>
                 ))}
+
+                <Separator />
+
+                <Button
+                  onClick={() => {
+                    navigate({
+                      to: "/food/logged",
+                    });
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  View all foods logged
+                </Button>
               </CardFooter>
             )}
           </Card>

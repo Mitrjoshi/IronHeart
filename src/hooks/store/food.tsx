@@ -184,3 +184,58 @@ export const useGetOrCreateMeal = () => {
     return id;
   };
 };
+
+export const useMealEntriesByType = (
+  mealName: MealName,
+  dayTs?: number,
+): FoodEntry[] => {
+  const ts = dayTs ?? Date.now();
+  const start = new Date(ts).setHours(0, 0, 0, 0);
+  const end = new Date(ts).setHours(23, 59, 59, 999);
+
+  const mealIds = useRowIds("meals", store);
+  const entryIds = useRowIds("foodEntries", store);
+
+  // Step 1: get mealIds matching name + day
+  const filteredMealIds = mealIds.filter((id) => {
+    const name = store.getCell("meals", id, "name") as MealName;
+    const loggedAt = store.getCell("meals", id, "loggedAt") as number;
+
+    return name === mealName && loggedAt >= start && loggedAt <= end;
+  });
+
+  // Step 2: get entries belonging to those meals
+  return entryIds
+    .filter((eid) =>
+      filteredMealIds.includes(
+        store.getCell("foodEntries", eid, "mealId") as string,
+      ),
+    )
+    .map((eid) => ({
+      id: eid,
+      mealId: store.getCell("foodEntries", eid, "mealId") as string,
+      foodCode: store.getCell("foodEntries", eid, "foodCode") as string,
+      foodName: store.getCell("foodEntries", eid, "foodName") as string,
+      quantity: store.getCell("foodEntries", eid, "quantity") as number,
+      unit: store.getCell("foodEntries", eid, "unit") as string,
+      calories: store.getCell("foodEntries", eid, "calories") as number,
+      protein: store.getCell("foodEntries", eid, "protein") as number,
+      carbs: store.getCell("foodEntries", eid, "carbs") as number,
+      fats: store.getCell("foodEntries", eid, "fats") as number,
+      createdAt: store.getCell("foodEntries", eid, "createdAt") as number,
+    }));
+};
+
+export const useMealTotals = (mealName: MealName, dayTs?: number) => {
+  const entries = useMealEntriesByType(mealName, dayTs);
+
+  return entries.reduce(
+    (acc, e) => ({
+      calories: acc.calories + e.calories,
+      protein: acc.protein + e.protein,
+      carbs: acc.carbs + e.carbs,
+      fats: acc.fats + e.fats,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fats: 0 },
+  );
+};
