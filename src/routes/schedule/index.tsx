@@ -23,7 +23,7 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header showBack title="Schedule" subtitle="Workout Tracker" />
+      <Header title="Schedule" subtitle="Workout Tracker" />
 
       <div className="space-y-4 pt-20 pb-18">
         <div className="space-y-2 p-4 py-0">

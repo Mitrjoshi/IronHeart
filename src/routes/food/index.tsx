@@ -74,7 +74,7 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header title="Food" subtitle="Track your meals" showBack />
+      <Header title="Food" subtitle="Track your meals" />
 
       <div className="space-y-4 pt-20">
         <div className="px-4">

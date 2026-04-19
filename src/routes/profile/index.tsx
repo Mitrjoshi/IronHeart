@@ -152,7 +152,7 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header showBack title="Weight" subtitle="Track your weight over time" />
+      <Header title="Profile" subtitle="Track your weight over time" />
 
       <div className="space-y-4 p-4 pt-20 pb-8">
         {/* Profile */}

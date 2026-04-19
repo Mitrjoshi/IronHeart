@@ -82,6 +82,12 @@ store.setTablesSchema({
 
     createdAt: { type: "number" },
   },
+
+  measurements: {
+    group: { type: "string" },
+    value: { type: "number" },
+    loggedAt: { type: "number" },
+  },
 });
 
 const persister = createLocalPersister(store, "schedule-store");
