@@ -21,7 +21,7 @@ import { WeeklyGraph } from "@/components/WeeklyGraph";
 import { useActiveSessions } from "@/hooks/store/activeSession";
 import { useWorkoutHistory } from "@/hooks/store/workouts";
 import { useDailyTotals, useMealsForDay } from "@/hooks/store/food";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
 import { store } from "@/store/schema";
