@@ -10,7 +10,7 @@ import {
 import { useAllSchedules } from "@/hooks/store/schedules";
 import { capitalize } from "@/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/schedule/")({
   component: RouteComponent,
@@ -36,13 +36,16 @@ function RouteComponent() {
                 params={{ scheduleId: split.id }}
               >
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="truncate">
-                      {capitalize(split.day)} - {split.name}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {split.exercises}
-                    </CardDescription>
+                  <CardHeader className="flex items-start justify-between">
+                    <div>
+                      <CardTitle>
+                        {capitalize(split.day)} - {split.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {split.exercises}
+                      </CardDescription>
+                    </div>
+                    <ChevronRight className="text-muted-foreground" />
                   </CardHeader>
                 </Card>
               </Link>

@@ -49,7 +49,7 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header title="Home" subtitle="Workout Tracker" />
+      <Header title="Iron Heart" subtitle="Workout Tracker" />
 
       <div className="space-y-4 pt-20 pb-4">
         <div className="space-y-2 p-4 py-0">
@@ -79,18 +79,15 @@ function RouteComponent() {
             <Button
               onClick={() =>
                 navigate({
-                  to: "/food",
-                  search: {
-                    search: "",
-                  },
+                  to: "/food/logged",
                 })
               }
               variant="link"
               className="text-muted-foreground underline"
               size="sm"
             >
-              Add Food
-              <Plus size={14} className="ml-1" />
+              View logs
+              <ChevronRight size={14} />
             </Button>
           </div>
 
@@ -152,52 +149,35 @@ function RouteComponent() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent>
-              {meals.length > 0 && (
-                <>
-                  {meals.map(
-                    (meal) =>
-                      meal.entries.length > 0 && (
-                        <div key={meal.id} className="w-full">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium capitalize">
-                              {meal.name}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {meal.entries
-                                .reduce((sum, e) => sum + e.calories, 0)
-                                .toFixed(0)}{" "}
-                              kcal
-                            </p>
-                          </div>
-                          <p className="text-muted-foreground text-xs">
-                            {meal.entries.map((e) => e.foodName).join(", ")}
+          {meals.length > 0 &&
+            meals.map(
+              (meal) =>
+                meal.entries.length > 0 && (
+                  <Card>
+                    <CardContent>
+                      <div key={meal.id} className="w-full">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium capitalize">
+                            {meal.name}
                           </p>
-                          <div className="mt-2">
-                            <Separator />
-                          </div>
+                          <p className="text-muted-foreground text-xs">
+                            {meal.entries
+                              .reduce((sum, e) => sum + e.calories, 0)
+                              .toFixed(0)}{" "}
+                            kcal
+                          </p>
                         </div>
-                      ),
-                  )}
-                </>
-              )}
-            </CardContent>
-
-            <CardFooter className="flex flex-col items-start gap-2">
-              <Button
-                onClick={() => {
-                  navigate({
-                    to: "/food/logged",
-                  });
-                }}
-                className="w-full"
-                size="lg"
-              >
-                View all foods logged
-              </Button>
-            </CardFooter>
-          </Card>
+                        <p className="text-muted-foreground text-xs">
+                          {meal.entries.map((e) => e.foodName).join(", ")}
+                        </p>
+                        <div className="mt-2">
+                          <Separator />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ),
+            )}
         </div>
 
         <Separator />

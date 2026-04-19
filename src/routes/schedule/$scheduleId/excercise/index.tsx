@@ -89,7 +89,7 @@ function RouteComponent() {
       <Header showBack title="Add Exercise" subtitle={scheduleData?.name} />
 
       <div className="space-y-4">
-        <div className="bg-background sticky top-16.25 z-10 space-y-2 border-b p-4">
+        <div className="bg-background sticky top-15.25 z-10 space-y-2 border-b p-4">
           <Card>
             <CardHeader>
               <Input

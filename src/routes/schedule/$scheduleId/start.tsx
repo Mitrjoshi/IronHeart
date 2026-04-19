@@ -93,7 +93,25 @@ function RouteComponent() {
   );
 
   useEffect(() => {
-    if (isResuming || !exercises.length) return;
+    if (!exercises.length) return;
+
+    if (isResuming) {
+      // Seed any exercises added after the session was saved
+      setExerciseSets((prev) => {
+        const patch: ExerciseSets = {};
+        for (const ex of exercises) {
+          if (!prev[ex.id]) {
+            patch[ex.id] = Array.from(
+              { length: ex.numberOfSets || 1 },
+              emptySet,
+            );
+          }
+        }
+        return Object.keys(patch).length ? { ...prev, ...patch } : prev;
+      });
+      return;
+    }
+
     setExerciseSets(
       Object.fromEntries(
         exercises.map((ex) => [
@@ -137,7 +155,7 @@ function RouteComponent() {
   ) => {
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: prev[exerciseId].map((set, i) =>
+      [exerciseId]: (prev[exerciseId] ?? []).map((set, i) =>
         i === index ? { ...set, [field]: value } : set,
       ),
     }));
@@ -146,14 +164,14 @@ function RouteComponent() {
   const addSet = (exerciseId: string) => {
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: [...prev[exerciseId], emptySet()],
+      [exerciseId]: [...(prev[exerciseId] ?? []), emptySet()],
     }));
   };
 
   const removeSet = (exerciseId: string, index: number) => {
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: prev[exerciseId].filter((_, i) => i !== index),
+      [exerciseId]: (prev[exerciseId] ?? []).filter((_, i) => i !== index),
     }));
   };
 
