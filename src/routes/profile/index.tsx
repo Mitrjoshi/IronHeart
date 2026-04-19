@@ -12,6 +12,7 @@ import {
   useLogWeight,
   useWeightHistory,
   useWeightInsights,
+  useDeleteWeight,
 } from "@/hooks/store/weight";
 import { useSettings, useUpdateSettings } from "@/hooks/store/settings";
 import { createFileRoute } from "@tanstack/react-router";
@@ -26,6 +27,7 @@ import {
 } from "recharts";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/profile/")({
   component: RouteComponent,
@@ -37,13 +39,36 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 const trendLabel = {
-  up: "📈 Trending Up",
-  down: "📉 Trending Down",
-  flat: "➡️ Holding Steady",
+  up: "Trending up",
+  down: "Trending down",
+  flat: "Holding steady",
 };
+
+function MetricTile({
+  label,
+  value,
+  sub,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="bg-muted/40 flex flex-col gap-0.5 rounded-xl px-4 py-3">
+      <p className="text-muted-foreground text-xs">{label}</p>
+      <p className={`text-lg leading-tight font-medium ${valueClass ?? ""}`}>
+        {value}
+      </p>
+      {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
+    </div>
+  );
+}
 
 function RouteComponent() {
   const logWeight = useLogWeight();
+  const deleteWeight = useDeleteWeight();
   const history = useWeightHistory();
   const insights = useWeightInsights();
   const settings = useSettings();
@@ -51,7 +76,6 @@ function RouteComponent() {
 
   const [value, setValue] = useState("");
   const [note, setNote] = useState("");
-
   const [height, setHeight] = useState(String(settings.height || ""));
   const [age, setAge] = useState(String(settings.age || ""));
   const [targetWeight, setTargetWeight] = useState(
@@ -64,6 +88,7 @@ function RouteComponent() {
     logWeight(num, note);
     setValue("");
     setNote("");
+    toast.success("Weight logged");
   };
 
   const handleSaveProfile = () => {
@@ -88,26 +113,61 @@ function RouteComponent() {
     };
   });
 
-  const profileComplete = settings.height > 0 && settings.age > 0;
+  const bmiCategory = insights?.bmi
+    ? insights.bmi < 18.5
+      ? "Underweight"
+      : insights.bmi < 25
+        ? "Normal"
+        : insights.bmi < 30
+          ? "Overweight"
+          : "Obese"
+    : null;
+
+  const trendColor = {
+    up:
+      insights?.goalDirection === "lose"
+        ? "text-red-500"
+        : insights?.goalDirection === "gain"
+          ? "text-green-500"
+          : "text-muted-foreground",
+    down:
+      insights?.goalDirection === "lose"
+        ? "text-green-500"
+        : insights?.goalDirection === "gain"
+          ? "text-red-500"
+          : "text-muted-foreground",
+    flat: "text-muted-foreground",
+  };
+
+  const weeklyChangeColor =
+    !insights || insights.weeklyChange === null || insights.weeklyChange === 0
+      ? ""
+      : insights.weeklyChange > 0
+        ? insights.goalDirection === "gain"
+          ? "text-green-500"
+          : "text-red-500"
+        : insights.goalDirection === "lose"
+          ? "text-green-500"
+          : "text-red-500";
 
   return (
     <AppLayout>
       <Header showBack title="Weight" subtitle="Track your weight over time" />
 
-      <div className="space-y-4 p-4 pt-20 pb-4">
-        {/* profile setup */}
+      <div className="space-y-4 p-4 pt-20 pb-8">
+        {/* Profile */}
         <Card>
           <CardHeader>
             <CardTitle>Profile</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             <div className="flex gap-2">
               <div className="flex-1">
                 <p className="text-muted-foreground mb-1 text-xs">
                   Height (cm)
                 </p>
                 <Input
-                  placeholder="e.g. 175"
+                  placeholder="175"
                   type="number"
                   value={height}
                   onChange={(e) => setHeight(e.target.value)}
@@ -116,7 +176,7 @@ function RouteComponent() {
               <div className="flex-1">
                 <p className="text-muted-foreground mb-1 text-xs">Age</p>
                 <Input
-                  placeholder="e.g. 25"
+                  placeholder="25"
                   type="number"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
@@ -127,7 +187,7 @@ function RouteComponent() {
                   Target (kg)
                 </p>
                 <Input
-                  placeholder="e.g. 75"
+                  placeholder="75"
                   type="number"
                   value={targetWeight}
                   onChange={(e) => setTargetWeight(e.target.value)}
@@ -140,15 +200,15 @@ function RouteComponent() {
               variant="outline"
               onClick={handleSaveProfile}
             >
-              Save Profile
+              Save profile
             </Button>
           </CardContent>
         </Card>
 
-        {/* log weight */}
+        {/* Log weight */}
         <Card>
           <CardHeader>
-            <CardTitle>Log Weight</CardTitle>
+            <CardTitle>Log weight</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex gap-2">
@@ -170,130 +230,94 @@ function RouteComponent() {
           </CardContent>
         </Card>
 
-        {/* insights */}
+        {/* Insights */}
         {insights && (
           <>
-            <div className="grid grid-cols-2 gap-2">
-              <Card>
-                <CardContent className="pt-4">
-                  <p className="text-muted-foreground text-xs">Current</p>
-                  <p className="text-2xl font-bold">
-                    {insights.latest.value}kg
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4">
-                  <p className="text-muted-foreground text-xs">7d Average</p>
-                  <p className="text-2xl font-bold">
-                    {insights.movingAverage?.toFixed(1)}kg
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4">
-                  <p className="text-muted-foreground text-xs">Weekly Change</p>
-                  <p
-                    className={`text-2xl font-bold ${
-                      insights.weeklyChange === null
-                        ? ""
-                        : insights.weeklyChange > 0
-                          ? "text-red-500"
-                          : insights.weeklyChange < 0
-                            ? "text-green-500"
-                            : ""
-                    }`}
-                  >
-                    {insights.weeklyChange === null
-                      ? "—"
-                      : `${insights.weeklyChange > 0 ? "+" : ""}${insights.weeklyChange.toFixed(1)}kg`}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4">
-                  <p className="text-muted-foreground text-xs">Streak</p>
-                  <p className="text-2xl font-bold">{insights.streak} days</p>
-                </CardContent>
-              </Card>
-
+            <div className="grid grid-cols-2 gap-3">
+              <MetricTile
+                label="Current"
+                value={`${insights.latest.value} kg`}
+              />
+              <MetricTile
+                label="7d average"
+                value={
+                  insights.movingAverage !== null
+                    ? `${insights.movingAverage} kg`
+                    : "—"
+                }
+              />
+              <MetricTile
+                label="Weekly change"
+                value={
+                  insights.weeklyChange === null
+                    ? "—"
+                    : `${insights.weeklyChange > 0 ? "+" : ""}${insights.weeklyChange} kg`
+                }
+                valueClass={weeklyChangeColor}
+              />
+              <MetricTile label="Streak" value={`${insights.streak} days`} />
               {insights.bmi && (
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-muted-foreground text-xs">BMI</p>
-                    <p className="text-2xl font-bold">{insights.bmi}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {insights.bmi < 18.5
-                        ? "Underweight"
-                        : insights.bmi < 25
-                          ? "Normal"
-                          : insights.bmi < 30
-                            ? "Overweight"
-                            : "Obese"}
-                    </p>
-                  </CardContent>
-                </Card>
+                <MetricTile
+                  label="BMI"
+                  value={String(insights.bmi)}
+                  sub={bmiCategory ?? undefined}
+                />
               )}
-
-              {profileComplete && insights.bmi && settings.age > 0 && (
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-muted-foreground text-xs">Age</p>
-                    <p className="text-2xl font-bold">{settings.age} yrs</p>
-                    <p className="text-muted-foreground text-xs">
-                      Height: {settings.height}cm
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
               {insights.trend && (
-                <Card>
-                  <CardContent className="pt-4">
-                    <p className="text-muted-foreground text-xs">30d Trend</p>
-                    <p className="text-sm font-medium">
-                      {trendLabel[insights.trend]}
-                    </p>
-                  </CardContent>
-                </Card>
+                <MetricTile
+                  label="30d trend"
+                  value={trendLabel[insights.trend]}
+                  valueClass={trendColor[insights.trend]}
+                />
               )}
             </div>
 
             {insights.targetProgress && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Target Progress</CardTitle>
+                  <CardTitle>Target progress</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>{insights.targetProgress.start}kg</span>
-                    <span className="text-muted-foreground">
-                      {Math.abs(insights.targetProgress.remaining).toFixed(1)}kg
-                      to go
-                    </span>
-                    <span>{insights.targetProgress.target}kg</span>
-                  </div>
-                  <div className="bg-muted h-2 w-full rounded-full">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all"
-                      style={{
-                        width: `${insights.targetProgress.percentage}%`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-muted-foreground text-center text-sm">
-                    {insights.targetProgress.percentage}% complete
-                  </p>
+                  {insights.targetProgress.percentage >= 100 ? (
+                    <div className="space-y-1 py-2 text-center">
+                      <p className="text-2xl">🎯</p>
+                      <p className="font-medium">Target reached!</p>
+                      <p className="text-muted-foreground text-sm">
+                        You hit your goal of {insights.targetProgress.target} kg
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>{insights.targetProgress.start} kg</span>
+                        <span className="text-muted-foreground">
+                          {Math.abs(insights.targetProgress.remaining).toFixed(
+                            1,
+                          )}{" "}
+                          kg to go
+                        </span>
+                        <span>{insights.targetProgress.target} kg</span>
+                      </div>
+                      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                        <div
+                          className="bg-primary h-2 rounded-full transition-all"
+                          style={{
+                            width: `${insights.targetProgress.percentage}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-muted-foreground text-center text-sm">
+                        {insights.targetProgress.percentage}% complete
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
           </>
         )}
 
-        {/* chart */}
+        {/* Chart */}
         {history.length >= 2 ? (
           <Card>
             <CardHeader>
@@ -312,7 +336,7 @@ function RouteComponent() {
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    width={35}
+                    width={40}
                     domain={["auto", "auto"]}
                     tickFormatter={(v) => `${v}kg`}
                   />
@@ -354,41 +378,50 @@ function RouteComponent() {
           </Card>
         ) : (
           <Card>
-            <CardContent>
-              <p className="text-muted-foreground text-center">
+            <CardContent className="py-8">
+              <p className="text-muted-foreground text-center text-sm">
                 Log at least 2 entries to see your progress chart.
               </p>
             </CardContent>
           </Card>
         )}
 
-        {/* history list */}
+        {/* History */}
         {history.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>History</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="divide-y">
               {[...history].reverse().map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between"
+                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                 >
-                  <div>
-                    <p className="font-medium">{entry.value}kg</p>
+                  <div className="space-y-0.5">
+                    <p className="font-medium">{entry.value} kg</p>
                     {entry.note && (
                       <p className="text-muted-foreground text-xs">
                         {entry.note}
                       </p>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-sm">
-                    {new Date(entry.loggedAt).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-muted-foreground text-sm">
+                      {new Date(entry.loggedAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteWeight(entry.id)}
+                    >
+                      <Trash2 size={15} className="text-muted-foreground" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>

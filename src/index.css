@@ -129,6 +129,7 @@
   }
 }
 
-.recharts-zIndex-layer_300 {
+.recharts-wrapper,
+.recharts-wrapper * {
   outline: none !important;
 }

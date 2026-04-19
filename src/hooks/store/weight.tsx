@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
 import { store } from "@/store/schema";
-import { useRowIds } from "tinybase/ui-react";
+import { useRow, useRowIds } from "tinybase/ui-react";
 
 type WeightEntry = {
   id: string;
@@ -17,6 +17,7 @@ type WeightInsights = {
   streak: number;
   daysSinceLastLog: number;
   bmi: number | null;
+  goalDirection: "lose" | "gain" | null;
   targetProgress: {
     target: number;
     start: number;
@@ -25,15 +26,6 @@ type WeightInsights = {
     percentage: number;
   } | null;
 };
-
-// ── settings helpers ────────────────────────────────────────────────────────
-
-const getSettingsNum = (key: string): number | null => {
-  const val = store.getCell("settings", "user", key) as number | undefined;
-  return val && val > 0 ? val : null;
-};
-
-// ── weight hooks ────────────────────────────────────────────────────────────
 
 export const useLogWeight = () => {
   return (value: number, note = "") => {
@@ -46,19 +38,16 @@ export const useLogWeight = () => {
 };
 
 export const useDeleteWeight = () => {
-  return (id: string) => {
-    store.delRow("weights", id);
-  };
+  return (id: string) => store.delRow("weights", id);
 };
 
 export const useWeightHistory = (): WeightEntry[] => {
   const ids = useRowIds("weights", store);
-
   return ids
     .map((id) => ({
       id,
       value: store.getCell("weights", id, "value") as number,
-      note: store.getCell("weights", id, "note") as string,
+      note: (store.getCell("weights", id, "note") as string) ?? "",
       loggedAt: store.getCell("weights", id, "loggedAt") as number,
     }))
     .sort((a, b) => a.loggedAt - b.loggedAt);
@@ -66,6 +55,7 @@ export const useWeightHistory = (): WeightEntry[] => {
 
 export const useWeightInsights = (): WeightInsights | null => {
   const ids = useRowIds("weights", store);
+  const settingsRow = useRow("settings", "user", store);
 
   const entries = ids
     .map((id) => ({
@@ -89,7 +79,7 @@ export const useWeightInsights = (): WeightInsights | null => {
       ? last7.reduce((sum, e) => sum + e.value, 0) / last7.length
       : null;
 
-  // weekly change (compare last 7 vs previous 7)
+  // weekly change
   const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
   const prev7 = entries.filter(
     (e) => e.loggedAt >= fourteenDaysAgo && e.loggedAt < sevenDaysAgo,
@@ -107,63 +97,80 @@ export const useWeightInsights = (): WeightInsights | null => {
   let trend: "up" | "down" | "flat" | null = null;
   if (last30.length >= 2) {
     const diff = last30.at(-1)!.value - last30[0].value;
-    if (diff > 0.5) trend = "up";
-    else if (diff < -0.5) trend = "down";
-    else trend = "flat";
+    trend = diff > 0.5 ? "up" : diff < -0.5 ? "down" : "flat";
   }
 
-  // consecutive-day streak
+  // Streak — skip today if not yet logged
   let streak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
   for (let i = 0; i < 365; i++) {
-    const dayStart = new Date(today);
-    dayStart.setDate(today.getDate() - i);
+    const dayStart = new Date(todayStart);
+    dayStart.setDate(todayStart.getDate() - i);
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(23, 59, 59, 999);
-    if (
-      entries.some(
-        (e) =>
-          e.loggedAt >= dayStart.getTime() && e.loggedAt <= dayEnd.getTime(),
-      )
-    ) {
+
+    const hasEntry = entries.some(
+      (e) => e.loggedAt >= dayStart.getTime() && e.loggedAt <= dayEnd.getTime(),
+    );
+
+    if (hasEntry) {
       streak++;
+    } else if (i === 0) {
+      continue;
     } else {
       break;
     }
   }
 
-  // days since last log
   const daysSinceLastLog = Math.floor(
     (now - latest.loggedAt) / (1000 * 60 * 60 * 24),
   );
 
-  // BMI — from settings
-  const height = getSettingsNum("height");
+  // BMI
+  const height =
+    settingsRow.height && (settingsRow.height as number) > 0
+      ? (settingsRow.height as number)
+      : null;
   const bmi =
     height && latest.value
       ? Math.round((latest.value / Math.pow(height / 100, 2)) * 10) / 10
       : null;
 
-  // target progress — from settings
-  const targetWeight = getSettingsNum("targetWeight");
-  const targetProgress =
-    targetWeight && earliest.value && earliest.value !== targetWeight
-      ? {
-          target: targetWeight,
-          start: earliest.value,
-          current: latest.value,
-          remaining: Math.round((latest.value - targetWeight) * 10) / 10,
-          percentage: Math.min(
-            100,
-            Math.round(
-              (Math.abs(earliest.value - latest.value) /
-                Math.abs(earliest.value - targetWeight)) *
-                100,
-            ),
-          ),
-        }
+  // Target
+  const targetWeight =
+    settingsRow.targetWeight && (settingsRow.targetWeight as number) > 0
+      ? (settingsRow.targetWeight as number)
       : null;
+
+  // Goal direction based on current weight vs target
+  const goalDirection: WeightInsights["goalDirection"] = targetWeight
+    ? latest.value > targetWeight
+      ? "lose"
+      : latest.value < targetWeight
+        ? "gain"
+        : null
+    : null;
+
+  // Target progress
+  let targetProgress: WeightInsights["targetProgress"] = null;
+  if (targetWeight && earliest.value !== targetWeight) {
+    const totalToChange = Math.abs(earliest.value - targetWeight);
+    const progressMade = Math.abs(earliest.value - latest.value);
+    const remaining = Math.round((latest.value - targetWeight) * 10) / 10;
+    const percentage = Math.min(
+      100,
+      Math.max(0, Math.round((progressMade / totalToChange) * 100)),
+    );
+    targetProgress = {
+      target: targetWeight,
+      start: earliest.value,
+      current: latest.value,
+      remaining,
+      percentage,
+    };
+  }
 
   return {
     latest,
@@ -175,32 +182,17 @@ export const useWeightInsights = (): WeightInsights | null => {
     streak,
     daysSinceLastLog,
     bmi,
+    goalDirection,
     targetProgress,
   };
 };
 
-// ── settings-derived hooks (use these wherever you need profile data) ────────
-
-export const useUserSettings = () => {
-  return {
-    height: getSettingsNum("height"),
-    age: getSettingsNum("age"),
-    targetWeight: getSettingsNum("targetWeight"),
-    targetCalories: getSettingsNum("targetCalories"),
-    targetProtein: getSettingsNum("targetProtein"),
-    targetCarbs: getSettingsNum("targetCarbs"),
-    targetFats: getSettingsNum("targetFats"),
-    weightUnit:
-      (store.getCell("settings", "user", "weightUnit") as string) || "kg",
-    theme: (store.getCell("settings", "user", "theme") as string) || "system",
-  };
-};
-
 export const useNutritionTargets = () => {
+  const row = useRow("settings", "user", store);
   return {
-    calories: getSettingsNum("targetCalories") ?? 2000,
-    protein: getSettingsNum("targetProtein") ?? 150,
-    carbs: getSettingsNum("targetCarbs") ?? 250,
-    fats: getSettingsNum("targetFats") ?? 65,
+    calories: (row.targetCalories as number) || 2000,
+    protein: (row.targetProtein as number) || 150,
+    carbs: (row.targetCarbs as number) || 250,
+    fats: (row.targetFats as number) || 65,
   };
 };

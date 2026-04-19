@@ -5,11 +5,11 @@ export const useSettings = () => {
   const row = useRow("settings", "user", store);
 
   return {
-    weightUnit: (row.weightUnit as "kg" | "lbs") ?? "kg",
-    theme: (row.theme as "light" | "dark" | "system") ?? "system",
-    height: (row.height as number) ?? 0,
-    age: (row.age as number) ?? 0,
-    targetWeight: (row.targetWeight as number) ?? 0,
+    weightUnit: (row.weightUnit as "kg" | "lbs") || "kg",
+    theme: (row.theme as "light" | "dark" | "system") || "system",
+    height: (row.height as number) || 0,
+    age: (row.age as number) || 0,
+    targetWeight: (row.targetWeight as number) || 0,
   };
 };
 
