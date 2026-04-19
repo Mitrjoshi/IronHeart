@@ -150,45 +150,53 @@ function RouteComponent() {
                 </div>
               ))}
             </CardContent>
+          </Card>
 
-            {meals.length > 0 && (
-              <CardFooter className="flex flex-col items-start gap-2">
-                {meals.map((meal) => (
-                  <div key={meal.id} className="w-full">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium capitalize">
-                        {meal.name}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {meal.entries
-                          .reduce((sum, e) => sum + e.calories, 0)
-                          .toFixed(0)}{" "}
-                        kcal
-                      </p>
-                    </div>
-                    {meal.entries.length > 0 && (
-                      <p className="text-muted-foreground text-xs">
-                        {meal.entries.map((e) => e.foodName).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                ))}
+          <Card>
+            <CardContent>
+              {meals.length > 0 && (
+                <>
+                  {meals.map(
+                    (meal) =>
+                      meal.entries.length > 0 && (
+                        <div key={meal.id} className="w-full">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium capitalize">
+                              {meal.name}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {meal.entries
+                                .reduce((sum, e) => sum + e.calories, 0)
+                                .toFixed(0)}{" "}
+                              kcal
+                            </p>
+                          </div>
+                          <p className="text-muted-foreground text-xs">
+                            {meal.entries.map((e) => e.foodName).join(", ")}
+                          </p>
+                          <div className="mt-2">
+                            <Separator />
+                          </div>
+                        </div>
+                      ),
+                  )}
+                </>
+              )}
+            </CardContent>
 
-                <Separator />
-
-                <Button
-                  onClick={() => {
-                    navigate({
-                      to: "/food/logged",
-                    });
-                  }}
-                  className="w-full"
-                  size="lg"
-                >
-                  View all foods logged
-                </Button>
-              </CardFooter>
-            )}
+            <CardFooter className="flex flex-col items-start gap-2">
+              <Button
+                onClick={() => {
+                  navigate({
+                    to: "/food/logged",
+                  });
+                }}
+                className="w-full"
+                size="lg"
+              >
+                View all foods logged
+              </Button>
+            </CardFooter>
           </Card>
         </div>
 
