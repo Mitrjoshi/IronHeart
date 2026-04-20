@@ -214,10 +214,7 @@ function RouteComponent() {
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium capitalize">{meal.name}</p>
-                  <p
-                    className="mt-0.5 truncate text-xs"
-                    style={{ color: S.muted }}
-                  >
+                  <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
                     {meal.entries.map((e) => e.foodName).join(", ")}
                   </p>
                 </div>
