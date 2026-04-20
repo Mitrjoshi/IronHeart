@@ -34,45 +34,39 @@ function RouteComponent() {
 
       <div className="space-y-4 pt-20 pb-4">
         <div className="space-y-2 p-4 py-0">
-          {workoutHistory.map((workout, index) => (
-            <div className="space-y-2">
-              {workoutHistory.slice(0, 3).map((workout, i) => (
-                <div key={i} style={S.card} className="space-y-2 px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
-                      {workout.scheduleName}
-                    </p>
-                    <p className="font-mono text-xs" style={{ color: S.amber }}>
-                      {formatDuration(workout.durationSeconds)}
+          {workoutHistory.map((workout, i) => (
+            <div key={i} style={S.card} className="space-y-2 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{workout.scheduleName}</p>
+                <p className="font-mono text-xs" style={{ color: S.amber }}>
+                  {formatDuration(workout.durationSeconds)}
+                </p>
+              </div>
+              <p className="truncate text-xs" style={{ color: S.muted }}>
+                {workout.exercisesDone.length > 0
+                  ? workout.exercisesDone.map((e) => e.name).join(", ")
+                  : "No exercises recorded"}
+              </p>
+              <div
+                className="flex items-center justify-around pt-1"
+                style={{ borderTop: "1px solid #1f1f1f" }}
+              >
+                {[
+                  { label: "Sets", value: workout.numberOfSets },
+                  { label: "Reps", value: workout.totalReps },
+                  {
+                    label: "Volume",
+                    value: formatVolume(workout.totalVolume),
+                  },
+                ].map(({ label, value }) => (
+                  <div key={label} className="text-center">
+                    <p className="text-sm font-semibold">{value}</p>
+                    <p className="text-xs" style={{ color: S.muted }}>
+                      {label}
                     </p>
                   </div>
-                  <p className="truncate text-xs" style={{ color: S.muted }}>
-                    {workout.exercisesDone.length > 0
-                      ? workout.exercisesDone.map((e) => e.name).join(", ")
-                      : "No exercises recorded"}
-                  </p>
-                  <div
-                    className="flex items-center justify-around pt-1"
-                    style={{ borderTop: "1px solid #1f1f1f" }}
-                  >
-                    {[
-                      { label: "Sets", value: workout.numberOfSets },
-                      { label: "Reps", value: workout.totalReps },
-                      {
-                        label: "Volume",
-                        value: formatVolume(workout.totalVolume),
-                      },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="text-center">
-                        <p className="text-sm font-semibold">{value}</p>
-                        <p className="text-xs" style={{ color: S.muted }}>
-                          {label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ))}
         </div>
