@@ -210,7 +210,7 @@ function RouteComponent() {
               <div
                 key={meal.id}
                 style={S.card}
-                className="flex items-center justify-between px-4 py-3"
+                className="flex items-start justify-between px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium capitalize">{meal.name}</p>
