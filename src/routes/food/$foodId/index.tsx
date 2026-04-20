@@ -1,18 +1,8 @@
 import { Header } from "@/components/Header";
-import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { FOODS } from "@/constants/foods";
 import { normalizeFood } from "@/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import React from "react";
-import { Progress } from "@/components/ui/progress";
 import { useAddFoodEntry, useGetOrCreateMeal } from "@/hooks/store/food";
 
 export const Route = createFileRoute("/food/$foodId/")({
@@ -22,6 +12,51 @@ export const Route = createFileRoute("/food/$foodId/")({
 const MEAL_OPTIONS = ["breakfast", "lunch", "dinner", "snack"] as const;
 type MealType = (typeof MEAL_OPTIONS)[number];
 
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  divider: { background: "#1f1f1f" },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  surface: "#1f1f1f",
+};
+
+const MACRO_CONFIG = [
+  {
+    key: "calories" as const,
+    label: "Calories",
+    unit: "kcal",
+    color: S.amber,
+    bar: S.amber,
+  },
+  {
+    key: "protein" as const,
+    label: "Protein",
+    unit: "g",
+    color: "#818cf8",
+    bar: "#818cf8",
+  },
+  {
+    key: "carbs" as const,
+    label: "Carbs",
+    unit: "g",
+    color: "#34d399",
+    bar: "#34d399",
+  },
+  {
+    key: "fats" as const,
+    label: "Fats",
+    unit: "g",
+    color: "#fb923c",
+    bar: "#fb923c",
+  },
+];
+
 function RouteComponent() {
   const foodId = Route.useParams().foodId;
   const router = useRouter();
@@ -30,19 +65,17 @@ function RouteComponent() {
     "fats" | "minerals" | "vitamins"
   >("fats");
   const [selectedMeal, setSelectedMeal] = React.useState<MealType>("breakfast");
-  const [quantity, setQuantity] = React.useState<number>(1);
+  const [quantity, setQuantity] = React.useState(1);
   const [adding, setAdding] = React.useState(false);
+
   const addFoodEntry = useAddFoodEntry();
   const getOrCreateMeal = useGetOrCreateMeal();
 
-  const NORMALIZED_FOODS = React.useMemo(
-    () => FOODS.filter((f) => f.food_code === foodId).map(normalizeFood),
-    [FOODS, foodId],
+  const food = React.useMemo(
+    () => FOODS.filter((f) => f.food_code === foodId).map(normalizeFood)[0],
+    [foodId],
   );
 
-  const food = NORMALIZED_FOODS[0];
-
-  // Scale nutrients by quantity (quantity = number of servings)
   const scaled = React.useMemo(
     () => ({
       calories: food.serving.calories * quantity,
@@ -62,10 +95,7 @@ function RouteComponent() {
       foodName: food.name,
       quantity: food.serving.quantity * quantity,
       unit: food.serving.unit,
-      calories: scaled.calories,
-      protein: scaled.protein,
-      carbs: scaled.carbs,
-      fats: scaled.fats,
+      ...scaled,
     });
     setAdding(false);
     router.history.back();
@@ -201,190 +231,232 @@ function RouteComponent() {
     vitamins: microVitamins,
   };
 
+  // max values for bar scaling
+  const maxScaled = Math.max(scaled.calories, 1);
+
   return (
-    <>
+    <div style={S.page} className="min-h-screen">
       <Header
         showBack
         title={food.name}
         subtitle={`${food.food_code} · per ${food.base.quantity}${food.serving.measurement} · ${food.serving.primarysource}`}
       />
 
-      <div className="space-y-4 pt-20 pb-8">
-        {/* Summary card */}
-        <div className="px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{food.name}</CardTitle>
-              <CardDescription>
-                {food.serving.calories.toFixed(1)} kcal per {food.serving.unit}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex items-center justify-around">
-              <p>{food.serving.calories.toFixed(1)} kcal</p>
-              <Separator orientation="vertical" />
-              <p>{food.serving.protein.toFixed(1)}g protein</p>
-              <Separator orientation="vertical" />
-              <p>{food.serving.carbs.toFixed(1)}g carbs</p>
-              <Separator orientation="vertical" />
-              <p>{food.serving.fats.toFixed(1)}g fat</p>
-            </CardContent>
-          </Card>
+      <div className="space-y-3 px-4 pt-20 pb-8">
+        {/* Summary strip */}
+        <div
+          style={S.card}
+          className="flex items-center justify-around px-4 py-3"
+        >
+          {[
+            {
+              label: "Calories",
+              value: `${food.serving.calories.toFixed(0)}`,
+              unit: "kcal",
+              color: S.amber,
+            },
+            {
+              label: "Protein",
+              value: `${food.serving.protein.toFixed(1)}`,
+              unit: "g",
+              color: "#818cf8",
+            },
+            {
+              label: "Carbs",
+              value: `${food.serving.carbs.toFixed(1)}`,
+              unit: "g",
+              color: "#34d399",
+            },
+            {
+              label: "Fats",
+              value: `${food.serving.fats.toFixed(1)}`,
+              unit: "g",
+              color: "#fb923c",
+            },
+          ].map(({ label, value, unit, color }, i, arr) => (
+            <React.Fragment key={label}>
+              <div className="text-center">
+                <p className="text-sm font-semibold" style={{ color }}>
+                  {value}
+                  <span
+                    className="ml-0.5 text-xs font-normal"
+                    style={{ color: S.mutedDark }}
+                  >
+                    {unit}
+                  </span>
+                </p>
+                <p
+                  className="mt-0.5 text-[10px]"
+                  style={{ color: S.mutedDark }}
+                >
+                  {label}
+                </p>
+              </div>
+              {i < arr.length - 1 && (
+                <div className="h-6 w-px" style={S.divider} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
 
-        <Separator />
+        {/* Add to meal */}
+        <div style={S.card} className="space-y-4 p-4">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Add to Meal
+          </p>
 
-        {/* Add meal card */}
-        <div className="px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add meal</CardTitle>
-              <CardDescription>
-                Add this food to your meal to count your calories and macros
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              {/* Meal selector */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Meal</p>
-                <div className="flex flex-wrap gap-2">
-                  {MEAL_OPTIONS.map((meal) => (
-                    <button
-                      key={meal}
-                      onClick={() => setSelectedMeal(meal)}
-                      className={`rounded-full border px-3 py-1 text-xs capitalize transition-colors ${
-                        selectedMeal === meal
-                          ? "bg-foreground text-background border-foreground font-medium"
-                          : "text-muted-foreground border-border/50"
-                      }`}
-                    >
-                      {meal}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quantity selector */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Servings</p>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setQuantity((q) => Math.max(0.5, q - 0.5))}
-                    className="border-border text-muted-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-full border text-lg transition-colors"
-                  >
-                    −
-                  </button>
-                  <span className="w-12 text-center text-sm font-medium">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity((q) => q + 0.5)}
-                    className="border-border text-muted-foreground hover:bg-muted flex h-8 w-8 items-center justify-center rounded-full border text-lg transition-colors"
-                  >
-                    +
-                  </button>
-                  <span className="text-muted-foreground text-xs">
-                    × {food.serving.unit}
-                  </span>
-                </div>
-              </div>
-
-              {/* Scaled macros */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium">Macros</p>
-                {[
-                  {
-                    id: "calories",
-                    label: "Calories",
-                    value: scaled.calories,
-                    display: `${scaled.calories.toFixed(1)} kcal`,
-                    color: "text-red-400",
-                    bar: "[&>div]:bg-red-400",
-                  },
-                  {
-                    id: "protein",
-                    label: "Protein",
-                    value: scaled.protein,
-                    display: `${scaled.protein.toFixed(1)}g`,
-                    color: "text-blue-400",
-                    bar: "[&>div]:bg-blue-400",
-                  },
-                  {
-                    id: "carbs",
-                    label: "Carbs",
-                    value: scaled.carbs,
-                    display: `${scaled.carbs.toFixed(1)}g`,
-                    color: "text-green-400",
-                    bar: "[&>div]:bg-green-400",
-                  },
-                  {
-                    id: "fats",
-                    label: "Fats",
-                    value: scaled.fats,
-                    display: `${scaled.fats.toFixed(1)}g`,
-                    color: "text-orange-400",
-                    bar: "[&>div]:bg-orange-400",
-                  },
-                ].map(({ id, label, value, display, color, bar }) => (
-                  <Field key={id} className={`w-full ${color}`}>
-                    <FieldLabel htmlFor={id}>
-                      <span>{label}</span>
-                      <span className="ml-auto">{display}</span>
-                    </FieldLabel>
-                    <Progress className={bar} value={value} id={id} />
-                  </Field>
-                ))}
-              </div>
-
-              <Separator />
-
-              {/* Micros */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium">Micros</p>
-                <div className="flex gap-2">
-                  {(["fats", "minerals", "vitamins"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setMicroTab(tab)}
-                      className={`rounded-full border px-3 py-1 text-xs capitalize transition-colors ${
-                        microTab === tab
-                          ? "bg-muted text-foreground border-border font-medium"
-                          : "text-muted-foreground border-border/50"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-                <div className="divide-border divide-y">
-                  {microTabs[microTab].map(({ label, value, unit }) => (
-                    <div
-                      key={label}
-                      className="flex items-center justify-between py-2"
-                    >
-                      <span className="text-muted-foreground text-sm">
-                        {label}
-                      </span>
-                      <span className="text-sm font-medium">
-                        {value} {unit}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* CTA */}
+          {/* Meal pills */}
+          <div className="flex flex-wrap gap-2">
+            {MEAL_OPTIONS.map((meal) => (
               <button
-                onClick={handleAdd}
-                disabled={adding}
-                className="bg-foreground text-background w-full cursor-pointer rounded-xl py-3 text-sm font-medium transition-opacity disabled:opacity-50"
+                key={meal}
+                onClick={() => setSelectedMeal(meal)}
+                className="rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors"
+                style={
+                  selectedMeal === meal
+                    ? { background: S.amber, color: "#0e0e0e" }
+                    : {
+                        background: S.surface,
+                        color: S.muted,
+                        border: "1px solid #262626",
+                      }
+                }
               >
-                {adding ? "Adding..." : `Add to ${selectedMeal}`}
+                {meal}
               </button>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+
+          {/* Servings stepper */}
+          <div className="flex items-center gap-3">
+            <p className="flex-1 text-xs" style={{ color: S.muted }}>
+              Servings{" "}
+              <span style={{ color: S.mutedDark }}>× {food.serving.unit}</span>
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQuantity((q) => Math.max(0.5, q - 0.5))}
+                className="flex size-8 items-center justify-center rounded-full text-lg font-medium transition-colors"
+                style={{ background: S.surface, color: "#f5f5f5" }}
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-sm font-semibold">
+                {quantity}
+              </span>
+              <button
+                onClick={() => setQuantity((q) => q + 0.5)}
+                className="flex size-8 items-center justify-center rounded-full text-lg font-medium transition-colors"
+                style={{ background: S.surface, color: "#f5f5f5" }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Scaled macro bars */}
+          <div className="space-y-2.5">
+            {MACRO_CONFIG.map(({ key, label, unit, color, bar }) => {
+              const val = scaled[key];
+              const pct =
+                key === "calories"
+                  ? Math.min((val / 2000) * 100, 100)
+                  : Math.min((val / 50) * 100, 100);
+              return (
+                <div key={key} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span style={{ color }}>{label}</span>
+                    <span style={{ color: S.muted }}>
+                      {val.toFixed(1)} {unit}
+                    </span>
+                  </div>
+                  <div
+                    className="h-1.5 w-full overflow-hidden rounded-full"
+                    style={{ background: "#1f1f1f" }}
+                  >
+                    <div
+                      className="h-1.5 rounded-full transition-all"
+                      style={{ width: `${pct}%`, background: bar }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={handleAdd}
+            disabled={adding}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold capitalize transition-opacity active:opacity-80 disabled:opacity-50"
+            style={{ background: S.amber, color: "#0e0e0e" }}
+          >
+            {adding ? "Adding..." : `Add to ${selectedMeal}`}
+          </button>
+        </div>
+
+        {/* Micros */}
+        <div style={S.card} className="space-y-3 p-4">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Micronutrients
+          </p>
+
+          {/* Micro tabs */}
+          <div className="flex gap-2">
+            {(["fats", "minerals", "vitamins"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setMicroTab(tab)}
+                className="rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors"
+                style={
+                  microTab === tab
+                    ? {
+                        background: S.surface,
+                        color: "#f5f5f5",
+                        border: "1px solid #404040",
+                      }
+                    : {
+                        background: "transparent",
+                        color: S.mutedDark,
+                        border: "1px solid #1f1f1f",
+                      }
+                }
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Micro rows */}
+          <div>
+            {microTabs[microTab].map(({ label, value, unit }, i, arr) => (
+              <div
+                key={label}
+                className="flex items-center justify-between py-2"
+                style={
+                  i < arr.length - 1
+                    ? { borderBottom: "1px solid #1a1a1a" }
+                    : {}
+                }
+              >
+                <span className="text-sm" style={{ color: S.muted }}>
+                  {label}
+                </span>
+                <span className="text-sm font-medium">
+                  {value ?? "—"}{" "}
+                  <span style={{ color: S.mutedDark }}>{unit}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

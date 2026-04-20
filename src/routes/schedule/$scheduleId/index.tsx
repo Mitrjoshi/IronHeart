@@ -1,11 +1,4 @@
 import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useDeleteSchedule, useScheduleById } from "@/hooks/store/schedules";
 import { formatDuration, formatWeight } from "@/utils";
@@ -29,9 +22,24 @@ import { store } from "@/store/schema";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { GripVertical, Play, Plus, Trash } from "lucide-react";
 import { useRef } from "react";
+
 export const Route = createFileRoute("/schedule/$scheduleId/")({
   component: RouteComponent,
 });
+
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  red: "#ef4444",
+  redSurface: "#2a1515",
+};
 
 type Exercise = ReturnType<typeof useExercisesBySchedule>[0];
 
@@ -51,13 +59,31 @@ function SortableExerciseCard({
     isDragging,
   } = useSortable({ id: exercise.id });
 
+  const wasDragging = useRef(false);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.4 : 1,
   };
 
-  const wasDragging = useRef(false);
+  const meta: string[] = [];
+  if (exercise.type === "weighted") {
+    meta.push(`${exercise.numberOfSets} sets`);
+    meta.push(`${exercise.totalReps} reps`);
+    meta.push(formatWeight(exercise.maxWeight));
+  } else if (exercise.type === "bodyweight") {
+    meta.push(`${exercise.numberOfSets} sets`);
+    meta.push(`${exercise.totalReps} reps`);
+  } else if (exercise.type === "duration") {
+    meta.push(`${exercise.numberOfSets} sets`);
+    meta.push(
+      formatDuration(
+        exercise.lastWorkoutSets?.reduce((s, x) => s + (x.duration ?? 0), 0) ??
+          0,
+      ),
+    );
+  }
 
   return (
     <div
@@ -71,7 +97,6 @@ function SortableExerciseCard({
       }}
     >
       <Link
-        className="cursor-pointer"
         to="/schedule/$scheduleId/excercise/$excerciseId"
         params={{ scheduleId, excerciseId: exercise.id }}
         onClick={(e) => {
@@ -81,53 +106,32 @@ function SortableExerciseCard({
           }
         }}
       >
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <div className="flex-1">
-              <CardTitle>{exercise.name}</CardTitle>
-              <CardDescription className="flex items-center gap-1">
-                <p className="text-sm">{exercise.numberOfSets} Sets</p>
+        <div
+          style={S.card}
+          className="flex items-center justify-between px-4 py-3"
+        >
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-sm font-medium">{exercise.name}</p>
+            <p className="text-xs" style={{ color: S.muted }}>
+              {meta.map((m, i) => (
+                <span key={i}>
+                  {i > 0 && <span style={{ color: S.mutedDark }}> · </span>}
+                  {m}
+                </span>
+              ))}
+            </p>
+          </div>
 
-                {exercise.type === "weighted" && (
-                  <>
-                    <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                    <p>{exercise.totalReps} Reps</p>
-                    <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                    <p>{formatWeight(exercise.maxWeight)}</p>
-                  </>
-                )}
-                {exercise.type === "bodyweight" && (
-                  <>
-                    <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                    <p>{exercise.totalReps} Reps</p>
-                  </>
-                )}
-                {exercise.type === "duration" && (
-                  <>
-                    <span className="bg-muted-foreground aspect-square h-1 rounded-full" />
-                    <p>
-                      {formatDuration(
-                        exercise.lastWorkoutSets?.reduce(
-                          (sum, s) => sum + (s.duration ?? 0),
-                          0,
-                        ) ?? 0,
-                      )}
-                    </p>
-                  </>
-                )}
-              </CardDescription>
-            </div>
-
-            <div
-              {...attributes}
-              {...listeners}
-              onClick={(e) => e.preventDefault()}
-              className="text-muted-foreground cursor-grab p-2 active:cursor-grabbing"
-            >
-              <GripVertical size={18} />
-            </div>
-          </CardHeader>
-        </Card>
+          <div
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.preventDefault()}
+            className="ml-3 cursor-grab p-2 active:cursor-grabbing"
+            style={{ color: S.mutedDark }}
+          >
+            <GripVertical size={17} />
+          </div>
+        </div>
       </Link>
     </div>
   );
@@ -136,7 +140,6 @@ function SortableExerciseCard({
 function RouteComponent() {
   const navigate = Route.useNavigate();
   const router = useRouter();
-
   const scheduleId = Route.useParams().scheduleId;
   const scheduleData = useScheduleById(scheduleId);
   const deleteSchedule = useDeleteSchedule();
@@ -152,81 +155,98 @@ function RouteComponent() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const ids = exercises.map((e) => e.id);
-    const oldIndex = ids.indexOf(active.id as string);
-    const newIndex = ids.indexOf(over.id as string);
-    const newOrder = arrayMove(ids, oldIndex, newIndex);
-
-    newOrder.forEach((id, index) => {
-      store.setCell("exercises", id, "order", index + 1);
-    });
+    const newOrder = arrayMove(
+      ids,
+      ids.indexOf(active.id as string),
+      ids.indexOf(over.id as string),
+    );
+    newOrder.forEach((id, index) =>
+      store.setCell("exercises", id, "order", index + 1),
+    );
   };
 
-  const ids = exercises.map((e) => e.id);
-
   return (
-    <>
+    <div style={S.page} className="min-h-screen">
       <Header
+        showBack
+        title={scheduleData?.name}
+        subtitle="Workout Tracker"
         right={
           <div className="flex items-center gap-2">
             <Link to="/schedule/$scheduleId/start" params={{ scheduleId }}>
-              <Button>
-                <Play size={16} />
-                <p>Start</p>
-              </Button>
+              <button
+                className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-opacity active:opacity-80"
+                style={{ background: S.amber, color: "#0e0e0e" }}
+              >
+                <Play size={14} />
+                Start
+              </button>
             </Link>
-            <Button
+            <button
               onClick={() => {
                 deleteSchedule(scheduleId);
                 router.history.back();
               }}
-              variant="destructive"
-              size="icon"
+              className="rounded-xl p-2 transition-colors"
+              style={{ background: S.redSurface, color: S.red }}
             >
               <Trash size={16} />
-            </Button>
+            </button>
           </div>
         }
-        showBack
-        title={scheduleData?.name}
-        subtitle="Workout Tracker"
       />
 
-      <div className="space-y-4 pt-20 pb-18">
-        <div className="space-y-2 p-4 py-0">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+      <div className="space-y-2 px-4 pt-20 pb-28">
+        {exercises.length === 0 && (
+          <div
+            style={S.card}
+            className="flex flex-col items-center justify-center space-y-1 py-16 text-center"
           >
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col space-y-2">
-                {exercises.map((exercise) => (
-                  <SortableExerciseCard
-                    key={exercise.id}
-                    exercise={exercise}
-                    scheduleId={scheduleId}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+            <p className="text-sm" style={{ color: S.muted }}>
+              No exercises yet.
+            </p>
+            <p className="text-xs" style={{ color: S.mutedDark }}>
+              Tap + to add your first exercise.
+            </p>
+          </div>
+        )}
 
-        <Button
-          onClick={() =>
-            navigate({
-              to: "/schedule/$scheduleId/excercise",
-              params: { scheduleId },
-            })
-          }
-          className="fixed right-4 bottom-4 z-10 size-14 cursor-pointer rounded-full shadow-2xl shadow-black"
-          size="icon-lg"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <Plus className="size-8" />
-        </Button>
+          <SortableContext
+            items={exercises.map((e) => e.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2">
+              {exercises.map((exercise) => (
+                <SortableExerciseCard
+                  key={exercise.id}
+                  exercise={exercise}
+                  scheduleId={scheduleId}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
-    </>
+
+      {/* FAB */}
+      <button
+        onClick={() =>
+          navigate({
+            to: "/schedule/$scheduleId/excercise",
+            params: { scheduleId },
+          })
+        }
+        className="fixed right-4 bottom-4 z-10 flex size-14 items-center justify-center rounded-full shadow-2xl transition-opacity active:opacity-80"
+        style={{ background: S.amber }}
+      >
+        <Plus size={24} color="#0e0e0e" />
+      </button>
+    </div>
   );
 }

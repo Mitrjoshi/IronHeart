@@ -1,15 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useAllSchedules, useSchedulesToday } from "@/hooks/store/schedules";
 import {
   capitalize,
@@ -23,9 +13,9 @@ import { useWorkoutHistory } from "@/hooks/store/workouts";
 import { useDailyTotals, useMealsForDay } from "@/hooks/store/food";
 import { ChevronRight } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-import { Progress } from "@/components/ui/progress";
 import { store } from "@/store/schema";
 import { useNutritionTargets } from "@/hooks/store/weight";
+import { redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -35,387 +25,433 @@ export const Route = createFileRoute("/")({
   },
 });
 
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5", minHeight: "100vh" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  divider: { borderColor: "#1f1f1f" },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  surface: "#1f1f1f",
+};
+
+function SectionLabel({
+  label,
+  linkLabel,
+  onLink,
+}: {
+  label: string;
+  linkLabel?: string;
+  onLink?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <p
+        className="text-xs font-semibold tracking-widest uppercase"
+        style={{ color: S.muted }}
+      >
+        {label}
+      </p>
+      {linkLabel && (
+        <button
+          onClick={onLink}
+          className="flex items-center gap-0.5 text-xs transition-colors"
+          style={{ color: S.muted }}
+        >
+          {linkLabel} <ChevronRight size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function MacroBar({
+  label,
+  value,
+  target,
+  unit,
+  color,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  unit: string;
+  color: string;
+}) {
+  const pct = Math.min((value / target) * 100, 100);
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span style={{ color }}>{label}</span>
+        <span style={{ color: S.muted }}>
+          {value.toFixed(1)}
+          {unit} / {target}
+          {unit}
+        </span>
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full"
+        style={{ background: "#262626" }}
+      >
+        <div
+          className="h-1.5 rounded-full transition-all"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function RouteComponent() {
   const navigate = Route.useNavigate();
-
   const schedules = useAllSchedules();
   const todaySchedules = useSchedulesToday();
   const workoutHistory = useWorkoutHistory();
   const activeSessions = useActiveSessions();
   const TARGETS = useNutritionTargets();
-
   const totals = useDailyTotals();
   const meals = useMealsForDay();
+
+  const remaining = (TARGETS.calories - totals.calories).toFixed(0);
 
   return (
     <AppLayout>
       <Header title="Iron Heart" subtitle="Workout Tracker" />
 
-      <div className="space-y-4 pt-20 pb-4">
-        <div className="space-y-2 p-4 py-0">
-          <p className="text-muted-foreground">Weekly Progress</p>
-          <Card>
-            <CardContent>
-              <WeeklyGraph />
-            </CardContent>
-            <CardFooter>
-              <Button
-                onClick={() => navigate({ to: "/report" })}
-                className="w-full"
-                size="lg"
-              >
-                View Detailed Report
-              </Button>
-            </CardFooter>
-          </Card>
+      <div style={S.page} className="space-y-6 px-4 pt-20 pb-8">
+        {/* Weekly progress */}
+        <div className="space-y-3">
+          <SectionLabel
+            label="Weekly Progress"
+            linkLabel="Full report"
+            onLink={() => navigate({ to: "/report" })}
+          />
+          <div style={S.card} className="p-4">
+            <WeeklyGraph />
+            <button
+              onClick={() => navigate({ to: "/report" })}
+              className="mt-3 w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
+              style={{ background: S.surface, color: "#f5f5f5" }}
+            >
+              View Detailed Report
+            </button>
+          </div>
         </div>
 
-        <Separator />
+        {/* Divider */}
+        <hr style={S.divider} />
 
-        {/* ── Daily nutrition summary ── */}
-        <div className="space-y-2 p-4 py-0">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Today's Nutrition</p>
-            <Button
-              onClick={() =>
-                navigate({
-                  to: "/food/logged",
-                })
-              }
-              variant="link"
-              className="text-muted-foreground underline"
-              size="sm"
-            >
-              View logs
-              <ChevronRight size={14} />
-            </Button>
-          </div>
+        {/* Nutrition */}
+        <div className="space-y-3">
+          <SectionLabel
+            label="Today's Nutrition"
+            linkLabel="View logs"
+            onLink={() => navigate({ to: "/food/logged" })}
+          />
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>{totals.calories.toFixed(0)} kcal</CardTitle>
-                <p className="text-muted-foreground text-sm">
-                  / {TARGETS.calories} kcal
+          <div style={S.card} className="space-y-4 p-4">
+            {/* Calorie headline */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-3xl font-bold" style={{ color: S.amber }}>
+                  {totals.calories.toFixed(0)}
+                  <span
+                    className="ml-1 text-base font-normal"
+                    style={{ color: S.muted }}
+                  >
+                    kcal
+                  </span>
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: S.mutedDark }}>
+                  {Number(remaining) >= 0
+                    ? `${remaining} kcal remaining`
+                    : `${Math.abs(Number(remaining))} kcal over`}
                 </p>
               </div>
-              <CardDescription>
-                {(TARGETS.calories - totals.calories).toFixed(0)} kcal remaining
-              </CardDescription>
-            </CardHeader>
+              <p className="text-sm" style={{ color: S.muted }}>
+                / {TARGETS.calories} kcal
+              </p>
+            </div>
 
-            <CardContent className="space-y-3">
-              {[
-                {
-                  label: "Protein",
-                  value: totals.protein,
-                  target: TARGETS.protein,
-                  unit: "g",
-                  bar: "[&>div]:bg-blue-400",
-                  color: "text-blue-400",
-                },
-                {
-                  label: "Carbs",
-                  value: totals.carbs,
-                  target: TARGETS.carbs,
-                  unit: "g",
-                  bar: "[&>div]:bg-green-400",
-                  color: "text-green-400",
-                },
-                {
-                  label: "Fats",
-                  value: totals.fats,
-                  target: TARGETS.fats,
-                  unit: "g",
-                  bar: "[&>div]:bg-orange-400",
-                  color: "text-orange-400",
-                },
-              ].map(({ label, value, target, unit, bar, color }) => (
-                <div key={label} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${color}`}>{label}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {value.toFixed(1)}
-                      {unit} / {target}
-                      {unit}
-                    </span>
-                  </div>
-                  <Progress
-                    value={Math.min((value / target) * 100, 100)}
-                    className={bar}
-                  />
+            {/* Macro bars */}
+            <div className="space-y-2.5">
+              <MacroBar
+                label="Protein"
+                value={totals.protein}
+                target={TARGETS.protein}
+                unit="g"
+                color="#818cf8"
+              />
+              <MacroBar
+                label="Carbs"
+                value={totals.carbs}
+                target={TARGETS.carbs}
+                unit="g"
+                color="#34d399"
+              />
+              <MacroBar
+                label="Fats"
+                value={totals.fats}
+                target={TARGETS.fats}
+                unit="g"
+                color="#fb923c"
+              />
+            </div>
+          </div>
+
+          {/* Meal breakdown */}
+          {meals
+            .filter((m) => m.entries.length > 0)
+            .map((meal) => (
+              <div
+                key={meal.id}
+                style={S.card}
+                className="flex items-center justify-between px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium capitalize">{meal.name}</p>
+                  <p
+                    className="mt-0.5 truncate text-xs"
+                    style={{ color: S.muted }}
+                  >
+                    {meal.entries.map((e) => e.foodName).join(", ")}
+                  </p>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {meals.length > 0 &&
-            meals.map(
-              (meal) =>
-                meal.entries.length > 0 && (
-                  <Card>
-                    <CardContent>
-                      <div key={meal.id} className="w-full">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium capitalize">
-                            {meal.name}
-                          </p>
-                          <p className="text-muted-foreground text-xs">
-                            {meal.entries
-                              .reduce((sum, e) => sum + e.calories, 0)
-                              .toFixed(0)}{" "}
-                            kcal
-                          </p>
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                          {meal.entries.map((e) => e.foodName).join(", ")}
-                        </p>
-                        <div className="mt-2">
-                          <Separator />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ),
-            )}
+                <p
+                  className="ml-3 shrink-0 text-sm font-semibold"
+                  style={{ color: S.amber }}
+                >
+                  {meal.entries.reduce((s, e) => s + e.calories, 0).toFixed(0)}{" "}
+                  kcal
+                </p>
+              </div>
+            ))}
         </div>
 
-        <Separator />
+        <hr style={S.divider} />
 
+        {/* Active sessions */}
         {activeSessions.map((session) => (
-          <>
-            <div className="px-4">
-              <Card key={session.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold">Resume {session.scheduleName}</p>
-                    <p className="text-muted-foreground">
-                      {formatElapsedTime(session.elapsedTime)}
-                    </p>
-                  </div>
-                  <CardDescription>
-                    {capitalize(session.scheduleDay)}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter>
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() =>
-                      navigate({
-                        to: "/schedule/$scheduleId/start",
-                        params: { scheduleId: session.scheduleId },
-                      })
-                    }
-                  >
-                    Continue Workout
-                  </Button>
-                </CardFooter>
-              </Card>
+          <div key={session.id} style={S.card} className="space-y-3 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">Resume {session.scheduleName}</p>
+                <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
+                  {capitalize(session.scheduleDay)}
+                </p>
+              </div>
+              <p className="font-mono text-sm" style={{ color: S.amber }}>
+                {formatElapsedTime(session.elapsedTime)}
+              </p>
             </div>
-            <Separator />
-          </>
+            <button
+              className="w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
+              style={{ background: S.amber, color: "#0e0e0e" }}
+              onClick={() =>
+                navigate({
+                  to: "/schedule/$scheduleId/start",
+                  params: { scheduleId: session.scheduleId },
+                })
+              }
+            >
+              Continue Workout
+            </button>
+          </div>
         ))}
 
-        <div className="space-y-2 p-4 py-0">
-          <p className="text-muted-foreground">Start Today's Workout</p>
-          <Card>
+        {/* Today's workout */}
+        <div className="space-y-3">
+          <SectionLabel label="Today's Workout" />
+          <div style={S.card} className="p-4">
             {todaySchedules.length > 0 ? (
-              <>
-                <CardHeader>
-                  <CardTitle>{todaySchedules[0]?.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-semibold">{todaySchedules[0]?.name}</p>
                   {!todaySchedules[0].isDone && (
-                    <CardDescription className="flex items-center gap-1">
+                    <p
+                      className="mt-1 flex items-center gap-1.5 text-xs"
+                      style={{ color: S.muted }}
+                    >
                       <span>{todaySchedules[0].exerciseCount} exercises</span>
-                      <span className="bg-muted-foreground size-1 rounded-full" />
+                      <span style={{ color: S.mutedDark }}>·</span>
                       <span>{todaySchedules[0].totalSets} sets</span>
                       {todaySchedules[0].totalReps > 0 && (
                         <>
-                          <span className="bg-muted-foreground size-1 rounded-full" />
+                          <span style={{ color: S.mutedDark }}>·</span>
                           <span>{todaySchedules[0].totalReps} reps</span>
                         </>
                       )}
                       {todaySchedules[0].totalDuration > 0 && (
                         <>
-                          <span className="bg-muted-foreground size-1 rounded-full" />
+                          <span style={{ color: S.mutedDark }}>·</span>
                           <span>
                             {formatDuration(todaySchedules[0].totalDuration)}
                           </span>
                         </>
                       )}
-                    </CardDescription>
+                    </p>
                   )}
-                </CardContent>
+                </div>
 
                 {todaySchedules[0].isDone ? (
-                  <CardContent className="flex flex-col items-center gap-1 py-2">
+                  <div className="space-y-1 py-4 text-center">
                     <p className="text-4xl">🏆</p>
                     <p className="font-semibold">Crushed it!</p>
-                    <p className="text-muted-foreground text-center text-sm">
+                    <p className="text-sm" style={{ color: S.muted }}>
                       You've completed today's workout. Rest up and come back
                       stronger.
                     </p>
-                  </CardContent>
+                  </div>
                 ) : (
-                  <CardFooter>
-                    <Button
-                      onClick={() =>
-                        navigate({
-                          to: "/schedule/$scheduleId/start",
-                          params: { scheduleId: todaySchedules[0].id },
-                        })
-                      }
-                      className="w-full"
-                      size="lg"
-                    >
-                      Start Workout
-                    </Button>
-                  </CardFooter>
-                )}
-              </>
-            ) : (
-              <>
-                <CardContent className="space-y-4">
-                  <p className="text-muted-foreground text-center">
-                    No workout scheduled for today. Please check your workout
-                    schedule and add a workout for today.
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    size="lg"
-                    className="w-full"
-                    onClick={() => navigate({ to: "/schedule/create" })}
+                  <button
+                    className="w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
+                    style={{ background: S.amber, color: "#0e0e0e" }}
+                    onClick={() =>
+                      navigate({
+                        to: "/schedule/$scheduleId/start",
+                        params: { scheduleId: todaySchedules[0].id },
+                      })
+                    }
                   >
-                    Create Schedule
-                  </Button>
-                </CardFooter>
-              </>
-            )}
-          </Card>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-2 p-4 py-0">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Workout Schedule</p>
-            <Button
-              onClick={() => navigate({ to: "/schedule" })}
-              variant="link"
-              className="text-muted-foreground underline"
-              size="sm"
-            >
-              View All
-              <ChevronRight />
-            </Button>
-          </div>
-          <div className="flex flex-col space-y-2">
-            {schedules.map((split) => (
-              <Link
-                key={split.id}
-                to="/schedule/$scheduleId"
-                className="cursor-pointer"
-                params={{ scheduleId: split.id }}
-              >
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>
-                        {capitalize(split.day)} - {split.name}
-                      </CardTitle>
-                      <p className="text-muted-foreground">
-                        ({split.estimatedMinutes} mins)
-                      </p>
-                    </div>
-                    <CardDescription>{split.exercises}</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          {schedules.length === 0 && (
-            <Card>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground text-center">
-                  You don't have any workout schedules yet. Click the button
-                  below
+                    Start Workout
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 text-center">
+                <p className="text-sm" style={{ color: S.muted }}>
+                  No workout scheduled for today.
                 </p>
-                <Button
+                <button
+                  className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                  style={{ background: S.surface, color: "#f5f5f5" }}
                   onClick={() => navigate({ to: "/schedule/create" })}
-                  size="lg"
-                  className="w-full cursor-pointer"
                 >
                   Create Schedule
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <hr style={S.divider} />
+
+        {/* Schedule list */}
+        <div className="space-y-3">
+          <SectionLabel
+            label="Workout Schedule"
+            linkLabel="View all"
+            onLink={() => navigate({ to: "/schedule" })}
+          />
+          {schedules.length > 0 ? (
+            <div className="space-y-2">
+              {schedules.map((split) => (
+                <Link
+                  key={split.id}
+                  to="/schedule/$scheduleId"
+                  params={{ scheduleId: split.id }}
+                >
+                  <div
+                    style={S.card}
+                    className="flex items-center justify-between px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">
+                        {capitalize(split.day)} — {split.name}
+                      </p>
+                      <p
+                        className="mt-0.5 truncate text-xs"
+                        style={{ color: S.muted }}
+                      >
+                        {split.exercises}
+                      </p>
+                    </div>
+                    <div className="ml-3 flex shrink-0 items-center gap-2">
+                      <p className="text-xs" style={{ color: S.mutedDark }}>
+                        {split.estimatedMinutes}m
+                      </p>
+                      <ChevronRight size={15} style={{ color: S.mutedDark }} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div style={S.card} className="space-y-3 p-4 text-center">
+              <p className="text-sm" style={{ color: S.muted }}>
+                No schedules yet.
+              </p>
+              <button
+                className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                style={{ background: S.surface, color: "#f5f5f5" }}
+                onClick={() => navigate({ to: "/schedule/create" })}
+              >
+                Create Schedule
+              </button>
+            </div>
           )}
         </div>
 
-        <Separator />
+        <hr style={S.divider} />
 
-        <div className="space-y-2 p-4 py-0">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">Workout History</p>
-            <Button
-              onClick={() => navigate({ to: "/history" })}
-              variant="link"
-              className="text-muted-foreground underline"
-              size="sm"
-            >
-              View All
-              <ChevronRight />
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {workoutHistory.length > 0 ? (
-              workoutHistory.slice(0, 3).map((workout, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <p className="flex items-center justify-between">
-                      <span>{workout.scheduleName}</span>
-                      <span className="text-muted-foreground">
-                        {formatDuration(workout.durationSeconds)}
-                      </span>
+        {/* Workout history */}
+        <div className="space-y-3">
+          <SectionLabel
+            label="Workout History"
+            linkLabel="View all"
+            onLink={() => navigate({ to: "/history" })}
+          />
+          {workoutHistory.length > 0 ? (
+            <div className="space-y-2">
+              {workoutHistory.slice(0, 3).map((workout, i) => (
+                <div key={i} style={S.card} className="space-y-2 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">
+                      {workout.scheduleName}
                     </p>
-                    <CardDescription>
-                      {workout.exercisesDone.length > 0
-                        ? workout.exercisesDone
-                            .map((exercise) => exercise.name)
-                            .join(", ")
-                        : "No exercises recorded"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="flex items-center justify-around">
-                    <p className="text-muted-foreground text-center">
-                      {workout.numberOfSets} sets
+                    <p className="font-mono text-xs" style={{ color: S.amber }}>
+                      {formatDuration(workout.durationSeconds)}
                     </p>
-                    <Separator orientation="vertical" />
-                    <p className="text-muted-foreground text-center">
-                      {workout.totalReps} reps
-                    </p>
-                    <Separator orientation="vertical" />
-                    <p className="text-muted-foreground text-center">
-                      {formatVolume(workout.totalVolume)}
-                    </p>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <Card>
-                <CardContent className="space-y-4">
-                  <p className="text-muted-foreground text-center">
-                    You don't have any workout history yet. Start working out
-                    and your workout logs will appear here.
+                  </div>
+                  <p className="truncate text-xs" style={{ color: S.muted }}>
+                    {workout.exercisesDone.length > 0
+                      ? workout.exercisesDone.map((e) => e.name).join(", ")
+                      : "No exercises recorded"}
                   </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  <div
+                    className="flex items-center justify-around pt-1"
+                    style={{ borderTop: "1px solid #1f1f1f" }}
+                  >
+                    {[
+                      { label: "Sets", value: workout.numberOfSets },
+                      { label: "Reps", value: workout.totalReps },
+                      {
+                        label: "Volume",
+                        value: formatVolume(workout.totalVolume),
+                      },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="text-center">
+                        <p className="text-sm font-semibold">{value}</p>
+                        <p className="text-xs" style={{ color: S.muted }}>
+                          {label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={S.card} className="p-4">
+              <p className="text-center text-sm" style={{ color: S.muted }}>
+                No workout history yet. Start your first session.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

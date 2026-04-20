@@ -1,7 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
@@ -25,7 +23,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
@@ -33,9 +30,36 @@ export const Route = createFileRoute("/profile/")({
   component: RouteComponent,
 });
 
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  input: {
+    background: "#111111",
+    border: "1px solid #262626",
+    color: "#f5f5f5",
+    borderRadius: 10,
+  },
+  tile: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 12,
+  },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  surface: "#1f1f1f",
+  green: "#22c55e",
+  red: "#ef4444",
+  indigo: "#818cf8",
+};
+
 const chartConfig = {
-  value: { label: "Weight (kg)", color: "var(--chart-1)" },
-  movingAverage: { label: "7d Average", color: "var(--chart-2)" },
+  value: { label: "Weight (kg)", color: "#f59e0b" },
+  movingAverage: { label: "7d Average", color: "#818cf8" },
 } satisfies ChartConfig;
 
 const trendLabel = {
@@ -44,24 +68,56 @@ const trendLabel = {
   flat: "Holding steady",
 };
 
+function SmallInput({
+  placeholder,
+  type = "text",
+  value,
+  onChange,
+}: {
+  placeholder: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <input
+      placeholder={placeholder}
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full min-w-0 px-3 py-2 text-sm transition-colors outline-none placeholder:text-[#404040] focus:border-amber-500"
+      style={S.input}
+    />
+  );
+}
+
 function MetricTile({
   label,
   value,
   sub,
-  valueClass,
+  valueColor,
 }: {
   label: string;
   value: string;
   sub?: string;
-  valueClass?: string;
+  valueColor?: string;
 }) {
   return (
-    <div className="bg-muted/40 flex flex-col gap-0.5 rounded-xl px-4 py-3">
-      <p className="text-muted-foreground text-xs">{label}</p>
-      <p className={`text-lg leading-tight font-medium ${valueClass ?? ""}`}>
+    <div style={S.tile} className="flex flex-col gap-0.5 px-4 py-3">
+      <p className="text-xs" style={{ color: S.muted }}>
+        {label}
+      </p>
+      <p
+        className="text-lg leading-tight font-semibold"
+        style={{ color: valueColor ?? "#f5f5f5" }}
+      >
         {value}
       </p>
-      {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
+      {sub && (
+        <p className="text-xs" style={{ color: S.muted }}>
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
@@ -81,6 +137,9 @@ function RouteComponent() {
   const [targetWeight, setTargetWeight] = useState(
     String(settings.targetWeight || ""),
   );
+  const [startWeight, setStartWeight] = useState(
+    String(settings.startWeight || ""),
+  );
 
   const handleLog = () => {
     const num = parseFloat(value);
@@ -96,13 +155,14 @@ function RouteComponent() {
       height: Number(height) || 0,
       age: Number(age) || 0,
       targetWeight: Number(targetWeight) || 0,
+      startWeight: Number(startWeight) || 0,
     });
     toast.success("Profile updated");
   };
 
   const chartData = history.map((entry, i) => {
-    const window = history.slice(Math.max(0, i - 6), i + 1);
-    const avg = window.reduce((sum, e) => sum + e.value, 0) / window.length;
+    const win = history.slice(Math.max(0, i - 6), i + 1);
+    const avg = win.reduce((s, e) => s + e.value, 0) / win.length;
     return {
       date: new Date(entry.loggedAt).toLocaleDateString("en-IN", {
         day: "numeric",
@@ -123,123 +183,135 @@ function RouteComponent() {
           : "Obese"
     : null;
 
-  const trendColor = {
+  const trendColorMap = {
     up:
       insights?.goalDirection === "lose"
-        ? "text-red-500"
+        ? S.red
         : insights?.goalDirection === "gain"
-          ? "text-green-500"
-          : "text-muted-foreground",
+          ? S.green
+          : S.muted,
     down:
       insights?.goalDirection === "lose"
-        ? "text-green-500"
+        ? S.green
         : insights?.goalDirection === "gain"
-          ? "text-red-500"
-          : "text-muted-foreground",
-    flat: "text-muted-foreground",
+          ? S.red
+          : S.muted,
+    flat: S.muted,
   };
 
   const weeklyChangeColor =
     !insights || insights.weeklyChange === null || insights.weeklyChange === 0
-      ? ""
+      ? undefined
       : insights.weeklyChange > 0
         ? insights.goalDirection === "gain"
-          ? "text-green-500"
-          : "text-red-500"
+          ? S.green
+          : S.red
         : insights.goalDirection === "lose"
-          ? "text-green-500"
-          : "text-red-500";
+          ? S.green
+          : S.red;
 
   return (
     <AppLayout>
       <Header title="Profile" subtitle="Track your weight over time" />
 
-      <div className="space-y-4 p-4 pt-20 pb-8">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <p className="text-muted-foreground mb-1 text-xs">
-                  Height (cm)
+      <div style={S.page} className="min-h-screen space-y-3 px-4 pt-20 pb-8">
+        {/* Profile settings */}
+        <div style={S.card} className="space-y-3 p-4">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Profile
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {
+                label: "Height (cm)",
+                placeholder: "175",
+                value: height,
+                onChange: setHeight,
+              },
+              { label: "Age", placeholder: "25", value: age, onChange: setAge },
+              {
+                label: "Target (kg)",
+                placeholder: "75",
+                value: targetWeight,
+                onChange: setTargetWeight,
+              },
+              {
+                label: "Start (kg)",
+                placeholder: "85",
+                value: startWeight,
+                onChange: setStartWeight,
+              },
+            ].map(({ label, placeholder, value, onChange }) => (
+              <div key={label} className="space-y-1">
+                <p className="text-xs" style={{ color: S.muted }}>
+                  {label}
                 </p>
-                <Input
-                  placeholder="175"
+                <SmallInput
+                  placeholder={placeholder}
                   type="number"
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
+                  value={value}
+                  onChange={onChange}
                 />
               </div>
-              <div className="flex-1">
-                <p className="text-muted-foreground mb-1 text-xs">Age</p>
-                <Input
-                  placeholder="25"
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-muted-foreground mb-1 text-xs">
-                  Target (kg)
-                </p>
-                <Input
-                  placeholder="75"
-                  type="number"
-                  value={targetWeight}
-                  onChange={(e) => setTargetWeight(e.target.value)}
-                />
-              </div>
-            </div>
-            <Button
-              className="w-full"
-              size="lg"
-              variant="outline"
-              onClick={handleSaveProfile}
-            >
-              Save profile
-            </Button>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+          <button
+            onClick={handleSaveProfile}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
+            style={{
+              background: S.surface,
+              color: "#f5f5f5",
+              border: "1px solid #262626",
+            }}
+          >
+            Save Profile
+          </button>
+        </div>
 
         {/* Log weight */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Log weight</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Weight (kg)"
-                type="number"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
-              <Input
-                placeholder="Note (optional)"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
-            </div>
-            <Button className="w-full" size="lg" onClick={handleLog}>
-              Log
-            </Button>
-          </CardContent>
-        </Card>
+        <div style={S.card} className="space-y-3 p-4">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Log Weight
+          </p>
+          <div className="flex gap-2">
+            <SmallInput
+              placeholder="Weight (kg)"
+              type="number"
+              value={value}
+              onChange={setValue}
+            />
+            <SmallInput
+              placeholder="Note (optional)"
+              value={note}
+              onChange={setNote}
+            />
+          </div>
+          <button
+            onClick={handleLog}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold transition-opacity active:opacity-80"
+            style={{ background: S.amber, color: "#0e0e0e" }}
+          >
+            Log
+          </button>
+        </div>
 
-        {/* Insights */}
+        {/* Insights tiles */}
         {insights && (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <MetricTile
                 label="Current"
                 value={`${insights.latest.value} kg`}
+                valueColor={S.amber}
               />
               <MetricTile
-                label="7d average"
+                label="7d Average"
                 value={
                   insights.movingAverage !== null
                     ? `${insights.movingAverage} kg`
@@ -247,13 +319,13 @@ function RouteComponent() {
                 }
               />
               <MetricTile
-                label="Weekly change"
+                label="Weekly Change"
                 value={
                   insights.weeklyChange === null
                     ? "—"
                     : `${insights.weeklyChange > 0 ? "+" : ""}${insights.weeklyChange} kg`
                 }
-                valueClass={weeklyChangeColor}
+                valueColor={weeklyChangeColor}
               />
               <MetricTile label="Streak" value={`${insights.streak} days`} />
               {insights.bmi && (
@@ -265,167 +337,193 @@ function RouteComponent() {
               )}
               {insights.trend && (
                 <MetricTile
-                  label="30d trend"
+                  label="30d Trend"
                   value={trendLabel[insights.trend]}
-                  valueClass={trendColor[insights.trend]}
+                  valueColor={trendColorMap[insights.trend]}
                 />
               )}
             </div>
 
+            {/* Target progress */}
             {insights.targetProgress && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Target progress</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {insights.targetProgress.percentage >= 100 ? (
-                    <div className="space-y-1 py-2 text-center">
-                      <p className="text-2xl">🎯</p>
-                      <p className="font-medium">Target reached!</p>
-                      <p className="text-muted-foreground text-sm">
-                        You hit your goal of {insights.targetProgress.target} kg
-                      </p>
+              <div style={S.card} className="space-y-3 p-4">
+                <p
+                  className="text-xs font-semibold tracking-widest uppercase"
+                  style={{ color: S.muted }}
+                >
+                  Target Progress
+                </p>
+                {insights.targetProgress.percentage >= 100 ? (
+                  <div className="space-y-1 py-4 text-center">
+                    <p className="text-3xl">🎯</p>
+                    <p className="font-semibold">Target reached!</p>
+                    <p className="text-sm" style={{ color: S.muted }}>
+                      You hit your goal of {insights.targetProgress.target} kg
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="flex justify-between text-xs"
+                      style={{ color: S.muted }}
+                    >
+                      <span>{insights.targetProgress.start} kg</span>
+                      <span style={{ color: S.amber }}>
+                        {Math.abs(insights.targetProgress.remaining).toFixed(1)}{" "}
+                        kg to go
+                      </span>
+                      <span>{insights.targetProgress.target} kg</span>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span>{insights.targetProgress.start} kg</span>
-                        <span className="text-muted-foreground">
-                          {Math.abs(insights.targetProgress.remaining).toFixed(
-                            1,
-                          )}{" "}
-                          kg to go
-                        </span>
-                        <span>{insights.targetProgress.target} kg</span>
-                      </div>
-                      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                        <div
-                          className="bg-primary h-2 rounded-full transition-all"
-                          style={{
-                            width: `${insights.targetProgress.percentage}%`,
-                          }}
-                        />
-                      </div>
-                      <p className="text-muted-foreground text-center text-sm">
-                        {insights.targetProgress.percentage}% complete
-                      </p>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+                    <div
+                      className="h-2 w-full overflow-hidden rounded-full"
+                      style={{ background: S.surface }}
+                    >
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: `${insights.targetProgress.percentage}%`,
+                          background: S.amber,
+                        }}
+                      />
+                    </div>
+                    <p
+                      className="text-center text-xs"
+                      style={{ color: S.muted }}
+                    >
+                      {insights.targetProgress.percentage}% complete
+                    </p>
+                  </>
+                )}
+              </div>
             )}
           </>
         )}
 
         {/* Chart */}
-        {history.length >= 2 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig}>
-                <LineChart data={chartData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    width={40}
-                    domain={["auto", "auto"]}
-                    tickFormatter={(v) => `${v}kg`}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent />}
-                  />
-                  {insights?.targetProgress && (
-                    <ReferenceLine
-                      y={insights.targetProgress.target}
-                      stroke="var(--chart-3)"
-                      strokeDasharray="4 4"
-                      label={{
-                        value: "Target",
-                        position: "insideTopRight",
-                        fontSize: 11,
-                      }}
-                    />
-                  )}
-                  <Line
-                    dataKey="value"
-                    type="monotone"
-                    stroke="var(--color-value)"
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
-                    activeDot={{ r: 5 }}
-                  />
-                  <Line
-                    dataKey="movingAverage"
-                    type="monotone"
-                    stroke="var(--color-movingAverage)"
-                    strokeWidth={2}
+        <div style={S.card} className="p-4">
+          <p
+            className="mb-3 text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Progress
+          </p>
+          {history.length >= 2 ? (
+            <ChartContainer config={chartConfig}>
+              <LineChart data={chartData}>
+                <CartesianGrid vertical={false} stroke="#1f1f1f" />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tick={{ fontSize: 11, fill: S.mutedDark }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  width={40}
+                  domain={["auto", "auto"]}
+                  tickFormatter={(v) => `${v}kg`}
+                  tick={{ fontSize: 11, fill: S.mutedDark }}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+                {insights?.targetProgress && (
+                  <ReferenceLine
+                    y={insights.targetProgress.target}
+                    stroke={S.green}
                     strokeDasharray="4 4"
-                    dot={false}
+                    label={{
+                      value: "Target",
+                      position: "insideTopRight",
+                      fontSize: 11,
+                      fill: S.green,
+                    }}
                   />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="py-8">
-              <p className="text-muted-foreground text-center text-sm">
-                Log at least 2 entries to see your progress chart.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+                )}
+                <Line
+                  dataKey="value"
+                  type="monotone"
+                  stroke={S.amber}
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: S.amber }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  dataKey="movingAverage"
+                  type="monotone"
+                  stroke={S.indigo}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                />
+              </LineChart>
+            </ChartContainer>
+          ) : (
+            <p
+              className="py-6 text-center text-sm"
+              style={{ color: S.mutedDark }}
+            >
+              Log at least 2 entries to see your progress chart.
+            </p>
+          )}
+        </div>
 
         {/* History */}
         {history.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>History</CardTitle>
-            </CardHeader>
-            <CardContent className="divide-y">
-              {[...history].reverse().map((entry) => (
+          <div style={S.card} className="p-4">
+            <p
+              className="mb-3 text-xs font-semibold tracking-widest uppercase"
+              style={{ color: S.muted }}
+            >
+              History
+            </p>
+            <div>
+              {[...history].reverse().map((entry, i, arr) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
+                  className="flex items-center justify-between py-2.5"
+                  style={
+                    i < arr.length - 1
+                      ? { borderBottom: "1px solid #1a1a1a" }
+                      : {}
+                  }
                 >
                   <div className="space-y-0.5">
-                    <p className="font-medium">{entry.value} kg</p>
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: S.amber }}
+                    >
+                      {entry.value} kg
+                    </p>
                     {entry.note && (
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-xs" style={{ color: S.muted }}>
                         {entry.note}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-xs" style={{ color: S.muted }}>
                       {new Date(entry.loggedAt).toLocaleDateString("en-IN", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })}
                     </p>
-                    <Button
-                      size="icon"
-                      variant="ghost"
+                    <button
                       onClick={() => deleteWeight(entry.id)}
+                      className="rounded-lg p-1.5 transition-colors"
+                      style={{ color: S.mutedDark }}
                     >
-                      <Trash2 size={15} className="text-muted-foreground" />
-                    </Button>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
     </AppLayout>

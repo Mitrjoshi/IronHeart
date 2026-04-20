@@ -1,30 +1,10 @@
 import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
 import { useFinishWorkout, useStartWorkout } from "@/hooks/store/workouts";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Minus, Plus, SquareArrowRightExit } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   useClearSession,
   useLoadSession,
@@ -37,8 +17,50 @@ export const Route = createFileRoute("/schedule/$scheduleId/start")({
 
 type SetEntry = { reps: string; weight: string; duration: string };
 type ExerciseSets = Record<string, SetEntry[]>;
-
 const emptySet = (): SetEntry => ({ reps: "", weight: "", duration: "" });
+
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5" },
+  sticky: { background: "#0e0e0e", borderBottom: "1px solid #1f1f1f" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  input: {
+    background: "#111111",
+    border: "1px solid #262626",
+    color: "#f5f5f5",
+    borderRadius: 10,
+  },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  surface: "#1f1f1f",
+  red: "#ef4444",
+  redSurface: "#2a1515",
+};
+
+function SmallInput({
+  placeholder,
+  value,
+  onChange,
+}: {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <input
+      placeholder={placeholder}
+      type="number"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full min-w-0 px-3 py-2 text-sm transition-colors outline-none placeholder:text-[#404040] focus:border-amber-500"
+      style={S.input}
+    />
+  );
+}
 
 function Countdown({ onComplete }: { onComplete: () => void }) {
   const [count, setCount] = useState(3);
@@ -48,23 +70,101 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
       onComplete();
       return;
     }
-    const timeout = setTimeout(() => setCount((c) => c - 1), 1000);
-    return () => clearTimeout(timeout);
+    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    return () => clearTimeout(t);
   }, [count]);
 
   return (
-    <div className="bg-background fixed inset-0 z-50 flex flex-col items-center justify-center">
-      <p className="text-muted-foreground mb-4 text-xl font-medium tracking-widest uppercase">
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      style={{ background: "#0e0e0e" }}
+    >
+      <p
+        className="mb-4 text-sm font-semibold tracking-widest uppercase"
+        style={{ color: S.muted }}
+      >
         Get Ready
       </p>
       <p
         key={count}
-        className="animate-ping-once text-[50vw] leading-none font-black"
-        style={{ animationDuration: "0.8s" }}
+        className="animate-ping-once leading-none font-black"
+        style={{ fontSize: "50vw", color: S.amber, animationDuration: "0.8s" }}
       >
         {count}
       </p>
     </div>
+  );
+}
+
+/* Exit dialog — no shadcn */
+function ExitDialog({
+  onSave,
+  onDiscard,
+}: {
+  onSave: () => void;
+  onDiscard: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors"
+        style={{ background: S.redSurface, color: S.red }}
+      >
+        <SquareArrowRightExit size={15} /> Exit
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0"
+            style={{ background: "rgba(0,0,0,0.7)" }}
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="relative z-10 w-full space-y-3 p-5"
+            style={{ ...S.card, borderRadius: 20 }}
+          >
+            <p className="text-base font-semibold">Exit Workout?</p>
+            <p className="text-sm" style={{ color: S.muted }}>
+              Your progress will be saved and you can continue later.
+            </p>
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onSave();
+                }}
+                className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                style={{ background: S.surface, color: "#f5f5f5" }}
+              >
+                Save & Exit
+              </button>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  onDiscard();
+                }}
+                className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                style={{ background: S.redSurface, color: S.red }}
+              >
+                Discard Workout
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-full rounded-xl py-2.5 text-sm"
+                style={{ color: S.muted }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -79,7 +179,6 @@ function RouteComponent() {
   const saveSession = useSaveSession();
   const clearSession = useClearSession();
   const savedSession = useLoadSession(scheduleId);
-
   const isResuming = !!savedSession;
 
   const [countdown, setCountdown] = useState(!isResuming);
@@ -87,36 +186,31 @@ function RouteComponent() {
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const workoutIdRef = useRef<string | null>(savedSession?.workoutId ?? null);
-
   const [exerciseSets, setExerciseSets] = useState<ExerciseSets>(
     savedSession?.exerciseSets ?? {},
   );
 
   useEffect(() => {
     if (!exercises.length) return;
-
     if (isResuming) {
-      // Seed any exercises added after the session was saved
       setExerciseSets((prev) => {
         const patch: ExerciseSets = {};
         for (const ex of exercises) {
-          if (!prev[ex.id]) {
+          if (!prev[ex.id])
             patch[ex.id] = Array.from(
               { length: ex.numberOfSets || 1 },
               emptySet,
             );
-          }
         }
         return Object.keys(patch).length ? { ...prev, ...patch } : prev;
       });
       return;
     }
-
     setExerciseSets(
       Object.fromEntries(
         exercises.map((ex) => [
           ex.id,
-          ex.lastWorkoutSets && ex.lastWorkoutSets.length > 0
+          ex.lastWorkoutSets?.length
             ? ex.lastWorkoutSets.map((s) => ({
                 reps: String(s.reps),
                 weight: String(s.weight),
@@ -128,16 +222,16 @@ function RouteComponent() {
     );
   }, [exercises.length]);
 
-  const update = () => {
+  const tick = () => {
     if (startRef.current !== null) {
       setTime(performance.now() - startRef.current);
-      rafRef.current = requestAnimationFrame(update);
+      rafRef.current = requestAnimationFrame(tick);
     }
   };
 
   const start = (fromTime = 0) => {
     startRef.current = performance.now() - fromTime;
-    rafRef.current = requestAnimationFrame(update);
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   useEffect(() => {
@@ -149,31 +243,28 @@ function RouteComponent() {
 
   const updateSet = (
     exerciseId: string,
-    index: number,
+    i: number,
     field: keyof SetEntry,
     value: string,
-  ) => {
+  ) =>
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: (prev[exerciseId] ?? []).map((set, i) =>
-        i === index ? { ...set, [field]: value } : set,
+      [exerciseId]: (prev[exerciseId] ?? []).map((s, idx) =>
+        idx === i ? { ...s, [field]: value } : s,
       ),
     }));
-  };
 
-  const addSet = (exerciseId: string) => {
+  const addSet = (exerciseId: string) =>
     setExerciseSets((prev) => ({
       ...prev,
       [exerciseId]: [...(prev[exerciseId] ?? []), emptySet()],
     }));
-  };
 
-  const removeSet = (exerciseId: string, index: number) => {
+  const removeSet = (exerciseId: string, i: number) =>
     setExerciseSets((prev) => ({
       ...prev,
-      [exerciseId]: (prev[exerciseId] ?? []).filter((_, i) => i !== index),
+      [exerciseId]: (prev[exerciseId] ?? []).filter((_, idx) => idx !== i),
     }));
-  };
 
   const handleCountdownComplete = () => {
     setCountdown(false);
@@ -181,31 +272,30 @@ function RouteComponent() {
     start();
   };
 
-  const handleFinishWorkout = () => {
+  const handleFinish = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (!workoutIdRef.current) return;
-
-    const durationSeconds = Math.floor(time / 1000);
-    const sets = exercises.flatMap((exercise) =>
-      (exerciseSets[exercise.id] ?? []).map((set, index) => ({
-        exerciseId: exercise.id,
-        reps: Number(set.reps) || 0,
-        weight: Number(set.weight) || 0,
-        duration: Number(set.duration) || 0,
-        order: index + 1,
-      })),
+    finishWorkout(
+      workoutIdRef.current,
+      Math.floor(time / 1000),
+      exercises.flatMap((ex) =>
+        (exerciseSets[ex.id] ?? []).map((s, i) => ({
+          exerciseId: ex.id,
+          reps: Number(s.reps) || 0,
+          weight: Number(s.weight) || 0,
+          duration: Number(s.duration) || 0,
+          order: i + 1,
+        })),
+      ),
     );
-
-    finishWorkout(workoutIdRef.current, durationSeconds, sets);
     clearSession(scheduleId);
     router.history.back();
   };
 
   const handleExit = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (workoutIdRef.current) {
+    if (workoutIdRef.current)
       saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
-    }
     router.history.back();
   };
 
@@ -215,165 +305,118 @@ function RouteComponent() {
     router.history.back();
   };
 
+  const pad = (n: number) => n.toString().padStart(2, "0");
   const sec = Math.floor((time / 1000) % 60);
   const min = Math.floor((time / (1000 * 60)) % 60);
   const hr = Math.floor(time / (1000 * 60 * 60));
-  const pad = (n: number) => n.toString().padStart(2, "0");
 
   return (
-    <>
+    <div style={S.page} className="min-h-screen">
       {countdown && <Countdown onComplete={handleCountdownComplete} />}
 
       <Header
-        right={
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <SquareArrowRightExit />
-                Exit
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Exit Workout?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Your progress will be saved and you can continue later.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="flex-col gap-2">
-                <AlertDialogAction onClick={handleExit}>
-                  Save & Exit
-                </AlertDialogAction>
-                <AlertDialogAction
-                  onClick={handleDiscard}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Discard Workout
-                </AlertDialogAction>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        }
+        showBack
         title={scheduleData?.name}
         subtitle={isResuming ? "Resuming Workout" : "Start your Workout"}
-        showBack
+        right={<ExitDialog onSave={handleExit} onDiscard={handleDiscard} />}
       />
 
-      <div className="bg-background sticky top-0 z-5 p-4 pt-20">
-        <Card>
-          <CardContent>
-            <p className="text-[18vw]">
-              {pad(hr)}:{pad(min)}:{pad(sec)}
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button onClick={handleFinishWorkout} size="lg" className="w-full">
-              <p>Finish Workout</p>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-
-      <div className="space-y-2 p-4 py-0 pb-4">
-        <div className="flex flex-col space-y-2">
-          {exercises.map((exercise) => (
-            <Card key={exercise.id}>
-              <CardHeader className="flex items-center justify-between">
-                <div>
-                  <p>{exercise.name}</p>
-                  <CardDescription>
-                    <p className="text-sm">
-                      {exerciseSets[exercise.id]?.length ?? 0} sets
-                    </p>
-                  </CardDescription>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex-col space-y-2">
-                {(exerciseSets[exercise.id] ?? []).map((set, index) => (
-                  <div key={index} className="flex w-full items-center gap-2">
-                    {exercise.type === "weighted" && (
-                      <>
-                        <Input
-                          placeholder="Reps"
-                          type="number"
-                          value={set.reps}
-                          onChange={(e) =>
-                            updateSet(
-                              exercise.id,
-                              index,
-                              "reps",
-                              e.target.value,
-                            )
-                          }
-                        />
-                        <Input
-                          placeholder="Weight (kg)"
-                          type="number"
-                          value={set.weight}
-                          onChange={(e) =>
-                            updateSet(
-                              exercise.id,
-                              index,
-                              "weight",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </>
-                    )}
-                    {exercise.type === "duration" && (
-                      <Input
-                        placeholder="Duration (sec)"
-                        type="number"
-                        value={set.duration}
-                        onChange={(e) =>
-                          updateSet(
-                            exercise.id,
-                            index,
-                            "duration",
-                            e.target.value,
-                          )
-                        }
-                      />
-                    )}
-                    {exercise.type === "bodyweight" && (
-                      <Input
-                        placeholder="Reps"
-                        type="number"
-                        value={set.reps}
-                        onChange={(e) =>
-                          updateSet(exercise.id, index, "reps", e.target.value)
-                        }
-                      />
-                    )}
-                    <Button
-                      disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
-                      onClick={() => removeSet(exercise.id, index)}
-                      variant="outline"
-                      size="icon"
-                    >
-                      <Minus className="text-muted-foreground" size={16} />
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-
-              <CardFooter>
-                <Button
-                  size="lg"
-                  className="w-full"
-                  onClick={() => addSet(exercise.id)}
-                >
-                  <Plus size={12} />
-                  <p>Add Set</p>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+      {/* Sticky timer */}
+      <div className="sticky top-[61px] z-9 px-4 py-3" style={S.sticky}>
+        <div style={S.card} className="space-y-3 p-4">
+          <p
+            className="leading-none font-black tabular-nums"
+            style={{ fontSize: "18vw", color: S.amber }}
+          >
+            {pad(hr)}:{pad(min)}:{pad(sec)}
+          </p>
+          <button
+            onClick={handleFinish}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold transition-opacity active:opacity-80"
+            style={{ background: S.amber, color: "#0e0e0e" }}
+          >
+            Finish Workout
+          </button>
         </div>
       </div>
-    </>
+
+      {/* Exercise cards */}
+      <div className="space-y-3 px-4 pt-18 pb-4">
+        {exercises.map((exercise) => (
+          <div key={exercise.id} style={S.card} className="space-y-3 p-4">
+            {/* Exercise header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{exercise.name}</p>
+                <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
+                  {exerciseSets[exercise.id]?.length ?? 0} sets
+                  <span style={{ color: S.mutedDark }}> · </span>
+                  <span className="capitalize">{exercise.type}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Sets */}
+            <div className="space-y-2">
+              {(exerciseSets[exercise.id] ?? []).map((set, i) => (
+                <div key={i} className="flex w-full min-w-0 items-center gap-2">
+                  <p
+                    className="w-6 shrink-0 text-center text-xs"
+                    style={{ color: S.mutedDark }}
+                  >
+                    {i + 1}
+                  </p>
+                  {exercise.type === "weighted" && (
+                    <>
+                      <SmallInput
+                        placeholder="Reps"
+                        value={set.reps}
+                        onChange={(v) => updateSet(exercise.id, i, "reps", v)}
+                      />
+                      <SmallInput
+                        placeholder="kg"
+                        value={set.weight}
+                        onChange={(v) => updateSet(exercise.id, i, "weight", v)}
+                      />
+                    </>
+                  )}
+                  {exercise.type === "duration" && (
+                    <SmallInput
+                      placeholder="Duration (sec)"
+                      value={set.duration}
+                      onChange={(v) => updateSet(exercise.id, i, "duration", v)}
+                    />
+                  )}
+                  {exercise.type === "bodyweight" && (
+                    <SmallInput
+                      placeholder="Reps"
+                      value={set.reps}
+                      onChange={(v) => updateSet(exercise.id, i, "reps", v)}
+                    />
+                  )}
+                  <button
+                    disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
+                    onClick={() => removeSet(exercise.id, i)}
+                    className="shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30"
+                    style={{ background: S.surface, color: S.muted }}
+                  >
+                    <Minus size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add set */}
+            <button
+              onClick={() => addSet(exercise.id)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-sm transition-colors"
+              style={{ background: S.surface, color: S.muted }}
+            >
+              <Plus size={14} /> Add Set
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

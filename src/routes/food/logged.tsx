@@ -1,13 +1,6 @@
 import { Header } from "@/components/Header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { useMealEntriesByType, useMealTotals } from "@/hooks/store/food";
 import { ChevronRight, Pen, Trash2 } from "lucide-react";
 import { useDeleteFoodEntry } from "@/hooks/store/food";
@@ -22,127 +15,187 @@ export const Route = createFileRoute("/food/logged")({
 const MEAL_OPTIONS = ["breakfast", "lunch", "dinner", "snack"] as const;
 type MealType = (typeof MEAL_OPTIONS)[number];
 
+const macroColors: Record<string, string> = {
+  Calories: "text-amber-400",
+  Protein: "text-indigo-400",
+  Carbs: "text-emerald-400",
+  Fats: "text-rose-400",
+};
+
 function RouteComponent() {
   const navigate = useNavigate();
   const [selectedMeal, setSelectedMeal] = React.useState<MealType>("breakfast");
-  const [selectedDate, setSelectedData] = React.useState(new Date());
+  const [selectedDate, setSelectedDate] = React.useState(new Date());
 
   const entries = useMealEntriesByType(selectedMeal);
   const totals = useMealTotals(selectedMeal);
   const deleteEntry = useDeleteFoodEntry();
 
   return (
-    <>
+    <div
+      className="min-h-screen"
+      style={{ background: "#0e0e0e", color: "#f5f5f5" }}
+    >
       <Header
         showBack
         title="Nutrition Log"
         subtitle="Your meals and macros for today"
         right={
           <Button
-            onClick={() =>
-              navigate({
-                to: "/food",
-                search: { search: "" },
-              })
-            }
+            onClick={() => navigate({ to: "/food", search: { search: "" } })}
             size="lg"
             variant="link"
-            className="text-muted-foreground underline"
+            className="text-[#737373] underline transition-colors hover:text-amber-400"
           >
-            Add food <ChevronRight />
+            Add food <ChevronRight size={16} />
           </Button>
         }
       />
 
-      <div className="space-y-4 pt-20 pb-4">
+      <div className="space-y-5 pt-20 pb-8">
         {/* Day selector */}
-        <DaySelector onChange={setSelectedData} selectedDate={selectedDate} />
+        <DaySelector onChange={setSelectedDate} selectedDate={selectedDate} />
 
-        {/* Meal type pills — no card wrapper, sits flush */}
-        <div className="flex flex-wrap gap-2 px-4">
+        {/* Meal pills */}
+        <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
           {MEAL_OPTIONS.map((meal) => (
             <button
               key={meal}
               onClick={() => setSelectedMeal(meal)}
-              className={`rounded-full border px-4 py-1.5 text-sm capitalize transition-colors ${
+              className="shrink-0 rounded-full px-4 py-1.5 text-sm capitalize transition-all"
+              style={
                 selectedMeal === meal
-                  ? "bg-foreground text-background border-foreground font-medium"
-                  : "text-muted-foreground border-border/50"
-              }`}
+                  ? {
+                      background: "#f59e0b",
+                      color: "#0e0e0e",
+                      fontWeight: 600,
+                      border: "1px solid #f59e0b",
+                    }
+                  : {
+                      background: "transparent",
+                      color: "#737373",
+                      border: "1px solid #262626",
+                    }
+              }
             >
               {meal}
             </button>
           ))}
         </div>
 
-        {/* Macro totals — 2×2 grid */}
+        {/* Macro tiles */}
         <div className="grid grid-cols-2 gap-3 px-4">
           {[
-            { label: "Calories", value: `${totals.calories.toFixed(1)} kcal` },
-            { label: "Protein", value: `${totals.protein.toFixed(1)}g` },
-            { label: "Carbs", value: `${totals.carbs.toFixed(1)}g` },
-            { label: "Fats", value: `${totals.fats.toFixed(1)}g` },
-          ].map(({ label, value }) => (
-            <Card key={label}>
-              <CardHeader>
-                <CardTitle>{label}</CardTitle>
-                <CardDescription>{value}</CardDescription>
-              </CardHeader>
-            </Card>
+            {
+              label: "Calories",
+              value: `${totals.calories.toFixed(1)}`,
+              unit: "kcal",
+            },
+            {
+              label: "Protein",
+              value: `${totals.protein.toFixed(1)}`,
+              unit: "g",
+            },
+            { label: "Carbs", value: `${totals.carbs.toFixed(1)}`, unit: "g" },
+            { label: "Fats", value: `${totals.fats.toFixed(1)}`, unit: "g" },
+          ].map(({ label, value, unit }) => (
+            <div
+              key={label}
+              className="flex flex-col gap-1 rounded-2xl p-4"
+              style={{ background: "#161616", border: "1px solid #1f1f1f" }}
+            >
+              <p className="text-xs" style={{ color: "#737373" }}>
+                {label}
+              </p>
+              <p
+                className={`text-2xl leading-tight font-semibold ${macroColors[label]}`}
+              >
+                {value}
+                <span
+                  className="ml-1 text-sm font-normal"
+                  style={{ color: "#525252" }}
+                >
+                  {unit}
+                </span>
+              </p>
+            </div>
           ))}
         </div>
 
-        {/* Food entries */}
+        {/* Entries */}
         <div className="px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{capitalize(selectedMeal)}</CardTitle>
-              <CardDescription>Items logged for this meal</CardDescription>
-            </CardHeader>
+          <div
+            className="overflow-hidden rounded-2xl"
+            style={{ background: "#161616", border: "1px solid #1f1f1f" }}
+          >
+            {/* Header row */}
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: "1px solid #1f1f1f" }}
+            >
+              <p className="font-semibold">{capitalize(selectedMeal)}</p>
+              <p className="text-xs" style={{ color: "#525252" }}>
+                {entries.length} item{entries.length !== 1 ? "s" : ""}
+              </p>
+            </div>
 
-            <CardContent>
-              {entries.length === 0 ? (
-                <div className="text-muted-foreground py-8 text-center text-sm">
-                  No food logged for {selectedMeal}
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {entries.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-3 py-3"
-                    >
-                      {/* Left */}
-                      <div className="min-w-0 space-y-0.5">
-                        <p className="truncate font-medium">{item.foodName}</p>
-                        <p className="text-muted-foreground text-xs">
-                          {item.calories.toFixed(1)} kcal ·{" "}
-                          {item.protein.toFixed(1)}g P · {item.carbs.toFixed(1)}
-                          g C · {item.fats.toFixed(1)}g F
-                        </p>
-                      </div>
-
-                      {/* Right */}
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Button size="icon" variant="outline">
-                          <Pen size={15} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => deleteEntry(item.id)}
-                        >
-                          <Trash2 size={15} />
-                        </Button>
-                      </div>
+            {entries.length === 0 ? (
+              <div
+                className="py-12 text-center text-sm"
+                style={{ color: "#404040" }}
+              >
+                No food logged for {selectedMeal}
+              </div>
+            ) : (
+              <div>
+                {entries.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3"
+                    style={{
+                      borderBottom:
+                        i < entries.length - 1 ? "1px solid #1a1a1a" : "none",
+                    }}
+                  >
+                    {/* Left */}
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-sm font-medium">
+                        {item.foodName}
+                      </p>
+                      <p className="text-xs" style={{ color: "#525252" }}>
+                        <span className="text-amber-400/80">
+                          {item.calories.toFixed(0)} kcal
+                        </span>
+                        {" · "}
+                        {item.protein.toFixed(1)}g P{" · "}
+                        {item.carbs.toFixed(1)}g C{" · "}
+                        {item.fats.toFixed(1)}g F
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+                    {/* Actions */}
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button
+                        className="rounded-xl p-2 transition-colors"
+                        style={{ background: "#1f1f1f", color: "#737373" }}
+                      >
+                        <Pen size={14} />
+                      </button>
+                      <button
+                        className="rounded-xl p-2 transition-colors"
+                        style={{ background: "#2a1515", color: "#ef4444" }}
+                        onClick={() => deleteEntry(item.id)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
