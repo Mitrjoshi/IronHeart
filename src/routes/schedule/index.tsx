@@ -44,36 +44,38 @@ function RouteComponent() {
           </div>
         )}
 
-        {schedules.map((split) => (
-          <Link
-            key={split.id}
-            to="/schedule/$scheduleId"
-            params={{ scheduleId: split.id }}
-          >
-            <div
-              style={S.card}
-              className="flex items-center justify-between px-4 py-3"
+        <div className="flex flex-col gap-2">
+          {schedules.map((split) => (
+            <Link
+              key={split.id}
+              to="/schedule/$scheduleId"
+              params={{ scheduleId: split.id }}
             >
-              <div className="min-w-0 space-y-0.5">
-                <p className="text-sm font-medium">
-                  <span style={{ color: S.amber }}>
-                    {capitalize(split.day)}
-                  </span>
-                  <span style={{ color: S.muted }}> — </span>
-                  {split.name}
-                </p>
-                <p className="truncate text-xs" style={{ color: S.muted }}>
-                  {split.exercises || "No exercises yet"}
-                </p>
+              <div
+                style={S.card}
+                className="flex items-start justify-between px-4 py-3"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="text-sm font-medium">
+                    <span style={{ color: S.amber }}>
+                      {capitalize(split.day)}
+                    </span>
+                    <span style={{ color: S.muted }}> — </span>
+                    {split.name}
+                  </p>
+                  <p className="text-xs" style={{ color: S.muted }}>
+                    {split.exercises || "No exercises yet"}
+                  </p>
+                </div>
+                <ChevronRight
+                  size={16}
+                  className="ml-3 shrink-0"
+                  style={{ color: S.mutedDark }}
+                />
               </div>
-              <ChevronRight
-                size={16}
-                className="ml-3 shrink-0"
-                style={{ color: S.mutedDark }}
-              />
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* FAB */}

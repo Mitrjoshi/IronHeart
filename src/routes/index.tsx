@@ -348,7 +348,7 @@ function RouteComponent() {
             onLink={() => navigate({ to: "/schedule" })}
           />
           {schedules.length > 0 ? (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1 space-y-2">
               {schedules.map((split) => (
                 <Link
                   key={split.id}
@@ -357,16 +357,13 @@ function RouteComponent() {
                 >
                   <div
                     style={S.card}
-                    className="flex items-center justify-between px-4 py-3"
+                    className="flex items-start justify-between px-4 py-3"
                   >
                     <div>
                       <p className="text-sm font-medium">
                         {capitalize(split.day)} — {split.name}
                       </p>
-                      <p
-                        className="mt-0.5 truncate text-xs"
-                        style={{ color: S.muted }}
-                      >
+                      <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
                         {split.exercises}
                       </p>
                     </div>
