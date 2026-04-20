@@ -231,9 +231,6 @@ function RouteComponent() {
     vitamins: microVitamins,
   };
 
-  // max values for bar scaling
-  const maxScaled = Math.max(scaled.calories, 1);
-
   return (
     <div style={S.page} className="min-h-screen">
       <Header

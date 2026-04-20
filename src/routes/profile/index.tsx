@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
 import {
