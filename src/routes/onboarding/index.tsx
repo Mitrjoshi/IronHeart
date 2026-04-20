@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { store } from "@/store/schema";
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Check, Mars, Venus } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export const Route = createFileRoute("/onboarding/")({
   component: RouteComponent,
@@ -166,25 +168,28 @@ function RouteComponent() {
               <p className="text-muted-foreground mb-2 text-xs tracking-widest uppercase">
                 Step 1 of 7
               </p>
-              <h2 className="text-2xl font-medium">What's your sex?</h2>
+              <h2 className="text-2xl font-medium">What's your Gender?</h2>
               <p className="text-muted-foreground mt-1 text-sm">
                 Used to calculate your metabolic rate accurately.
               </p>
             </div>
             <div className="flex gap-3">
               {(["male", "female"] as Sex[]).map((s) => (
-                <button
+                <Button
+                  size={"lg"}
                   key={s}
+                  variant={sex === s ? "default" : "outline"}
                   onClick={() => setSex(s)}
                   className={cn(
-                    "flex-1 rounded-full border py-3 text-sm capitalize transition-colors",
+                    "flex-1 rounded-full border capitalize duration-200",
                     sex === s
-                      ? "border-amber-500 bg-amber-50 font-medium text-amber-800"
+                      ? "bg-amber-50 font-medium"
                       : "border-border text-muted-foreground",
                   )}
                 >
+                  {s === "male" ? <Mars /> : <Venus />}
                   {s}
-                </button>
+                </Button>
               ))}
             </div>
             <Button
@@ -339,32 +344,30 @@ function RouteComponent() {
                 Your activity level multiplies your base calorie needs.
               </p>
             </div>
+
             <div className="flex flex-col gap-2">
               {ACTIVITY_OPTIONS.map((opt) => (
-                <button
+                <Button
                   key={opt.value}
+                  size="lg"
+                  variant={"outline"}
                   onClick={() => setActivity(opt.value)}
-                  className={cn(
-                    "rounded-xl border px-4 py-3 text-left text-sm transition-colors",
-                    activity === opt.value
-                      ? "border-amber-500 bg-amber-50"
-                      : "border-border text-muted-foreground",
-                  )}
+                  className={"relative items-center capitalize duration-200"}
                 >
-                  <span
-                    className={cn(
-                      "font-medium",
-                      activity === opt.value
-                        ? "text-amber-800"
-                        : "text-foreground",
-                    )}
-                  >
-                    {opt.label}
-                  </span>
-                  <span className="text-muted-foreground"> — {opt.sub}</span>
-                </button>
+                  <p className={"font-medium"}>{opt.label}</p>
+                  <p className="text-muted-foreground"> — {opt.sub}</p>
+
+                  {opt.value === activity && (
+                    <div className="absolute right-2">
+                      <Check />
+                    </div>
+                  )}
+                </Button>
               ))}
             </div>
+
+            <Separator />
+
             <Button
               className="w-full"
               size="lg"
@@ -396,18 +399,15 @@ function RouteComponent() {
             </div>
             <div className="flex gap-3">
               {GOAL_OPTIONS.map((opt) => (
-                <button
+                <Button
                   key={opt.value}
+                  variant={goal === opt.value ? "default" : "outline"}
+                  size="lg"
                   onClick={() => setGoal(opt.value)}
-                  className={cn(
-                    "flex-1 rounded-xl border py-3 text-sm transition-colors",
-                    goal === opt.value
-                      ? "border-amber-500 bg-amber-50 font-medium text-amber-800"
-                      : "border-border text-muted-foreground",
-                  )}
+                  className={"duration-200"}
                 >
                   {opt.label}
-                </button>
+                </Button>
               ))}
             </div>
             <Button

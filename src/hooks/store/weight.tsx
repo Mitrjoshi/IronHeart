@@ -154,15 +154,17 @@ export const useWeightInsights = (): WeightInsights | null => {
     : null;
 
   // Target progress
+  // Target progress
   let targetProgress: WeightInsights["targetProgress"] = null;
   if (targetWeight && earliest.value !== targetWeight) {
-    const totalToChange = Math.abs(earliest.value - targetWeight);
-    const progressMade = Math.abs(earliest.value - latest.value);
+    const totalToChange = earliest.value - targetWeight; // signed
+    const progressMade = earliest.value - latest.value; // signed
     const remaining = Math.round((latest.value - targetWeight) * 10) / 10;
-    const percentage = Math.min(
-      100,
-      Math.max(0, Math.round((progressMade / totalToChange) * 100)),
-    );
+
+    // If progress is in the wrong direction, clamp to 0
+    const rawPercentage = (progressMade / totalToChange) * 100;
+    const percentage = Math.min(100, Math.max(0, Math.round(rawPercentage)));
+
     targetProgress = {
       target: targetWeight,
       start: earliest.value,

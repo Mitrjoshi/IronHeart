@@ -15,8 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ScheduleIndexRouteImport } from './routes/schedule/index'
 import { Route as ProfileIndexRouteImport } from './routes/profile/index'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
+import { Route as MeasurementsIndexRouteImport } from './routes/measurements/index'
 import { Route as FoodIndexRouteImport } from './routes/food/index'
-import { Route as BodyIndexRouteImport } from './routes/body/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
 import { Route as FoodLoggedRouteImport } from './routes/food/logged'
 import { Route as ScheduleScheduleIdIndexRouteImport } from './routes/schedule/$scheduleId/index'
@@ -55,14 +55,14 @@ const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   path: '/onboarding/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeasurementsIndexRoute = MeasurementsIndexRouteImport.update({
+  id: '/measurements/',
+  path: '/measurements/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FoodIndexRoute = FoodIndexRouteImport.update({
   id: '/food/',
   path: '/food/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BodyIndexRoute = BodyIndexRouteImport.update({
-  id: '/body/',
-  path: '/body/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScheduleCreateRoute = ScheduleCreateRouteImport.update({
@@ -109,8 +109,8 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
-  '/body/': typeof BodyIndexRoute
   '/food/': typeof FoodIndexRoute
+  '/measurements/': typeof MeasurementsIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/schedule/': typeof ScheduleIndexRoute
@@ -126,8 +126,8 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
-  '/body': typeof BodyIndexRoute
   '/food': typeof FoodIndexRoute
+  '/measurements': typeof MeasurementsIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/schedule': typeof ScheduleIndexRoute
@@ -144,8 +144,8 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
-  '/body/': typeof BodyIndexRoute
   '/food/': typeof FoodIndexRoute
+  '/measurements/': typeof MeasurementsIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/schedule/': typeof ScheduleIndexRoute
@@ -163,8 +163,8 @@ export interface FileRouteTypes {
     | '/report'
     | '/food/logged'
     | '/schedule/create'
-    | '/body/'
     | '/food/'
+    | '/measurements/'
     | '/onboarding/'
     | '/profile/'
     | '/schedule/'
@@ -180,8 +180,8 @@ export interface FileRouteTypes {
     | '/report'
     | '/food/logged'
     | '/schedule/create'
-    | '/body'
     | '/food'
+    | '/measurements'
     | '/onboarding'
     | '/profile'
     | '/schedule'
@@ -197,8 +197,8 @@ export interface FileRouteTypes {
     | '/report'
     | '/food/logged'
     | '/schedule/create'
-    | '/body/'
     | '/food/'
+    | '/measurements/'
     | '/onboarding/'
     | '/profile/'
     | '/schedule/'
@@ -215,8 +215,8 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   FoodLoggedRoute: typeof FoodLoggedRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
-  BodyIndexRoute: typeof BodyIndexRoute
   FoodIndexRoute: typeof FoodIndexRoute
+  MeasurementsIndexRoute: typeof MeasurementsIndexRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   ScheduleIndexRoute: typeof ScheduleIndexRoute
@@ -271,18 +271,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/measurements/': {
+      id: '/measurements/'
+      path: '/measurements'
+      fullPath: '/measurements/'
+      preLoaderRoute: typeof MeasurementsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/food/': {
       id: '/food/'
       path: '/food'
       fullPath: '/food/'
       preLoaderRoute: typeof FoodIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/body/': {
-      id: '/body/'
-      path: '/body'
-      fullPath: '/body/'
-      preLoaderRoute: typeof BodyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedule/create': {
@@ -343,8 +343,8 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   FoodLoggedRoute: FoodLoggedRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
-  BodyIndexRoute: BodyIndexRoute,
   FoodIndexRoute: FoodIndexRoute,
+  MeasurementsIndexRoute: MeasurementsIndexRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   ScheduleIndexRoute: ScheduleIndexRoute,
