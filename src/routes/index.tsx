@@ -414,7 +414,7 @@ function RouteComponent() {
                       {formatDuration(workout.durationSeconds)}
                     </p>
                   </div>
-                  <p className="truncate text-xs" style={{ color: S.muted }}>
+                  <p className="text-xs" style={{ color: S.muted }}>
                     {workout.exercisesDone.length > 0
                       ? workout.exercisesDone.map((e) => e.name).join(", ")
                       : "No exercises recorded"}
