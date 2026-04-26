@@ -62,8 +62,6 @@ export const useAllSchedules = () => {
     const finalSeconds =
       lastDurationSeconds > 0 ? lastDurationSeconds : estimatedSeconds;
 
-    const minutes = Math.ceil(finalSeconds / 60);
-
     return {
       id,
       name: store.getCell("schedules", id, "name") as string,
