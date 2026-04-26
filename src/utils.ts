@@ -53,18 +53,24 @@ export function normalizeFood(food: FoodItem) {
 
   const energy = food.energy_kcal ?? 0;
 
-  const ratio = energy > 0 ? (food.unit_serving_energy_kcal ?? 0) / energy : 1;
+  const isCustom = food.food_code?.startsWith("CUSTOM");
 
-  const servingSize = ratio * baseQuantity;
+  const ratio =
+    !isCustom && food.unit_serving_energy_kcal && energy > 0
+      ? food.unit_serving_energy_kcal / energy
+      : 1;
 
-  const measurement = getMeasurement(food.servings_unit);
+  const servingSize = Math.round(ratio * baseQuantity);
+
+  const unit = food.servings_unit || "g";
+  const measurement = getMeasurement(unit);
 
   return {
     name: food.food_name,
     food_code: food.food_code,
 
     base: {
-      quantity: 100,
+      quantity: baseQuantity,
       calories: energy,
       protein: food.protein_g ?? 0,
       carbs: food.carb_g ?? 0,
@@ -72,13 +78,18 @@ export function normalizeFood(food: FoodItem) {
     },
 
     serving: {
-      unit: food.servings_unit || "serving",
+      unit,
       quantity: servingSize,
-      measurement, // 🔥 important
+      measurement,
+
       calories: food.unit_serving_energy_kcal ?? energy * ratio,
+
       protein: food.unit_serving_protein_g ?? (food.protein_g ?? 0) * ratio,
+
       carbs: food.unit_serving_carb_g ?? (food.carb_g ?? 0) * ratio,
+
       fats: food.unit_serving_fat_g ?? (food.fat_g ?? 0) * ratio,
+
       ...food,
     },
   };

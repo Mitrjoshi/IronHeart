@@ -7,7 +7,7 @@ import {
 } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Minus, Plus, Trash } from "lucide-react";
+import { Minus, Plus, Trash, Pencil, Check, X } from "lucide-react";
 import React from "react";
 
 export const Route = createFileRoute(
@@ -18,6 +18,8 @@ export const Route = createFileRoute(
 
 type Set = { id?: string; reps: string; weight: string; duration: string };
 const emptySet = (): Set => ({ reps: "", weight: "", duration: "" });
+
+const EXERCISE_TYPES: ExerciseType[] = ["weighted", "bodyweight", "duration"];
 
 const S = {
   page: { background: "#0e0e0e", color: "#f5f5f5" },
@@ -35,6 +37,7 @@ const S = {
   muted: "#737373",
   mutedDark: "#404040",
   amber: "#f59e0b",
+  amberSurface: "#2a1f00",
   surface: "#1f1f1f",
   red: "#ef4444",
   redSurface: "#2a1515",
@@ -67,10 +70,12 @@ function RouteComponent() {
   const excerciseId = Route.useParams().excerciseId;
   const scheduleData = useScheduleById(scheduleId);
   const excerciseData = useExerciseById(excerciseId);
-  const deleteWorkout = useDeleteExercise();
+  const deleteExercise = useDeleteExercise();
   const updateExercise = useUpdateExercise();
 
-  const exerciseType = (excerciseData?.type ?? "weighted") as ExerciseType;
+  const [isEditingMeta, setIsEditingMeta] = React.useState(false);
+  const [editName, setEditName] = React.useState("");
+  const [editType, setEditType] = React.useState<ExerciseType>("weighted");
 
   const [sets, setSets] = React.useState<Set[]>(
     () =>
@@ -84,6 +89,28 @@ function RouteComponent() {
 
   if (!excerciseData) return null;
 
+  const exerciseType = isEditingMeta
+    ? editType
+    : ((excerciseData?.type ?? "weighted") as ExerciseType);
+
+  const handleStartEdit = () => {
+    setEditName(excerciseData.name);
+    setEditType((excerciseData.type ?? "weighted") as ExerciseType);
+    setIsEditingMeta(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingMeta(false);
+  };
+
+  const handleConfirmEdit = () => {
+    setIsEditingMeta(false);
+    // if type changed, reset sets to a single empty set
+    if (editType !== excerciseData.type) {
+      setSets([emptySet()]);
+    }
+  };
+
   const updateSet = (i: number, field: keyof Set, value: string) =>
     setSets((prev) =>
       prev.map((s, idx) => (idx === i ? { ...s, [field]: value } : s)),
@@ -96,7 +123,7 @@ function RouteComponent() {
   const handleUpdate = () => {
     updateExercise(
       excerciseId,
-      excerciseData.name,
+      isEditingMeta ? editName : excerciseData.name,
       sets.map((s) => ({
         id: s.id,
         reps: Number(s.reps) || 0,
@@ -116,7 +143,7 @@ function RouteComponent() {
         right={
           <button
             onClick={() => {
-              deleteWorkout(excerciseId);
+              deleteExercise(excerciseId);
               router.history.back();
             }}
             className="rounded-xl p-2 transition-colors"
@@ -128,18 +155,100 @@ function RouteComponent() {
       />
 
       <div className="space-y-3 px-4 pt-20 pb-8">
-        <div style={S.card} className="space-y-3 p-4">
-          {/* Type badge (read-only) */}
-          <div>
-            <span
-              className="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
-              style={{ background: S.surface, color: S.muted }}
-            >
-              {exerciseType}
-            </span>
-          </div>
+        {/* Name + Type card */}
+        <div style={S.card} className="p-4">
+          {isEditingMeta ? (
+            <div className="space-y-3">
+              {/* Name input */}
+              <div className="space-y-1">
+                <p className="text-xs" style={{ color: S.muted }}>
+                  Exercise name
+                </p>
+                <input
+                  autoFocus
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 text-sm outline-none"
+                  style={{ ...S.input, borderRadius: 10 }}
+                  placeholder="e.g. Bench Press"
+                />
+              </div>
 
-          {/* Sets */}
+              {/* Type selector */}
+              <div className="space-y-1">
+                <p className="text-xs" style={{ color: S.muted }}>
+                  Type
+                </p>
+                <div className="flex gap-2">
+                  {EXERCISE_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setEditType(t)}
+                      className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
+                      style={
+                        exerciseType === t
+                          ? { background: S.amber, color: "#0e0e0e" }
+                          : {
+                              background: S.surface,
+                              color: S.muted,
+                              border: "1px solid #262626",
+                            }
+                      }
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                {editType !== excerciseData.type && (
+                  <p className="pt-1 text-xs" style={{ color: S.red }}>
+                    Changing type will reset current sets
+                  </p>
+                )}
+              </div>
+
+              {/* Confirm / Cancel */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-sm transition-colors"
+                  style={{ background: S.surface, color: S.muted }}
+                >
+                  <X size={14} /> Cancel
+                </button>
+                <button
+                  disabled={!editName.trim()}
+                  onClick={handleConfirmEdit}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition-opacity disabled:opacity-40"
+                  style={{ background: S.amberSurface, color: S.amber }}
+                >
+                  <Check size={14} /> Done
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="space-y-1.5">
+                <p className="font-semibold">{excerciseData.name}</p>
+                <span
+                  className="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                  style={{ background: S.surface, color: S.muted }}
+                >
+                  {excerciseData.type}
+                </span>
+              </div>
+              <button
+                onClick={handleStartEdit}
+                className="rounded-xl p-2 transition-colors"
+                style={{ background: S.surface, color: S.muted }}
+              >
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Sets card */}
+        <div style={S.card} className="space-y-3 p-4">
           <div className="space-y-2">
             {sets.map((set, i) => (
               <div key={i} className="flex w-full min-w-0 items-center gap-2">
@@ -189,7 +298,6 @@ function RouteComponent() {
             ))}
           </div>
 
-          {/* Add set + Update */}
           <div className="flex gap-2 pt-1">
             <button
               onClick={addSet}

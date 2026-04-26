@@ -2,26 +2,10 @@ import { Header } from "@/components/Header";
 import { useExercisesBySchedule } from "@/hooks/store/excercise";
 import { useDeleteSchedule, useScheduleById } from "@/hooks/store/schedules";
 import { formatDuration, formatWeight } from "@/utils";
-import {
-  DndContext,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { store } from "@/store/schema";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { GripVertical, Play, Plus, Trash } from "lucide-react";
-import { useRef } from "react";
+import { Play, Plus, Trash, ChevronUp, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/schedule/$scheduleId/")({
   component: RouteComponent,
@@ -39,34 +23,28 @@ const S = {
   amber: "#f59e0b",
   red: "#ef4444",
   redSurface: "#2a1515",
+  surface: "#1f1f1f",
 };
 
 type Exercise = ReturnType<typeof useExercisesBySchedule>[0];
 
-function SortableExerciseCard({
+function ExerciseCard({
   exercise,
   scheduleId,
+  isFirst,
+  isLast,
+  animatingDirection,
+  onMoveUp,
+  onMoveDown,
 }: {
   exercise: Exercise;
   scheduleId: string;
+  isFirst: boolean;
+  isLast: boolean;
+  animatingDirection: "up" | "down" | null;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: exercise.id });
-
-  const wasDragging = useRef(false);
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
   const meta: string[] = [];
   if (exercise.type === "weighted") {
     meta.push(`${exercise.numberOfSets} sets`);
@@ -87,52 +65,54 @@ function SortableExerciseCard({
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      onMouseDown={() => {
-        wasDragging.current = false;
+      style={{
+        ...S.card,
+        transform:
+          animatingDirection === "up"
+            ? "translateY(-4px)"
+            : animatingDirection === "down"
+              ? "translateY(4px)"
+              : "translateY(0)",
+        transition: "transform 0.18s ease, opacity 0.18s ease",
+        opacity: animatingDirection ? 0.7 : 1,
       }}
-      onMouseMove={() => {
-        wasDragging.current = true;
-      }}
+      className="flex items-center gap-2 px-3 py-3"
     >
       <Link
         to="/schedule/$scheduleId/excercise/$excerciseId"
         params={{ scheduleId, excerciseId: exercise.id }}
-        onClick={(e) => {
-          if (wasDragging.current) {
-            e.preventDefault();
-            wasDragging.current = false;
-          }
-        }}
+        className="min-w-0 flex-1 space-y-0.5"
       >
-        <div
-          style={S.card}
-          className="flex items-center justify-between px-4 py-3"
-        >
-          <div className="min-w-0 space-y-0.5">
-            <p className="text-sm font-medium">{exercise.name}</p>
-            <p className="text-xs" style={{ color: S.muted }}>
-              {meta.map((m, i) => (
-                <span key={i}>
-                  {i > 0 && <span style={{ color: S.mutedDark }}> · </span>}
-                  {m}
-                </span>
-              ))}
-            </p>
-          </div>
-
-          <div
-            {...attributes}
-            {...listeners}
-            onClick={(e) => e.preventDefault()}
-            className="ml-3 cursor-grab p-2 active:cursor-grabbing"
-            style={{ color: S.mutedDark }}
-          >
-            <GripVertical size={17} />
-          </div>
-        </div>
+        <p className="text-sm font-medium">{exercise.name}</p>
+        <p className="text-xs" style={{ color: S.muted }}>
+          {meta.map((m, i) => (
+            <span key={i}>
+              {i > 0 && <span style={{ color: S.mutedDark }}> · </span>}
+              {m}
+            </span>
+          ))}
+        </p>
       </Link>
+
+      {/* Up / Down buttons */}
+      <div className="flex flex-col gap-0.5">
+        <button
+          disabled={isFirst}
+          onClick={onMoveUp}
+          className="rounded-lg p-1 transition-colors disabled:opacity-20"
+          style={{ background: S.surface, color: S.muted }}
+        >
+          <ChevronUp size={14} />
+        </button>
+        <button
+          disabled={isLast}
+          onClick={onMoveDown}
+          className="rounded-lg p-1 transition-colors disabled:opacity-20"
+          style={{ background: S.surface, color: S.muted }}
+        >
+          <ChevronDown size={14} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -143,27 +123,45 @@ function RouteComponent() {
   const scheduleId = Route.useParams().scheduleId;
   const scheduleData = useScheduleById(scheduleId);
   const deleteSchedule = useDeleteSchedule();
-  const exercises = useExercisesBySchedule(scheduleId);
+  const rawExercises = useExercisesBySchedule(scheduleId);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    }),
-  );
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
+  // { id: string, direction: "up" | "down" }[]
+  const [animating, setAnimating] = useState<
+    { id: string; direction: "up" | "down" }[]
+  >([]);
+  const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const ids = exercises.map((e) => e.id);
-    const newOrder = arrayMove(
-      ids,
-      ids.indexOf(active.id as string),
-      ids.indexOf(over.id as string),
-    );
-    newOrder.forEach((id, index) =>
-      store.setCell("exercises", id, "order", index + 1),
-    );
+  useEffect(() => {
+    setOrderedIds(rawExercises.map((e) => e.id));
+  }, [rawExercises.length]);
+
+  const exercises = orderedIds
+    .map((id) => rawExercises.find((e) => e.id === id))
+    .filter(Boolean) as typeof rawExercises;
+
+  const move = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= exercises.length) return;
+
+    const movingId = orderedIds[fromIndex];
+    const displacedId = orderedIds[toIndex];
+    const direction = toIndex < fromIndex ? "up" : "down";
+
+    // trigger animation
+    setAnimating([
+      { id: movingId, direction },
+      { id: displacedId, direction: direction === "up" ? "down" : "up" },
+    ]);
+
+    if (animTimerRef.current) clearTimeout(animTimerRef.current);
+    animTimerRef.current = setTimeout(() => {
+      setAnimating([]);
+      const next = [...orderedIds];
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, item);
+      setOrderedIds(next);
+      next.forEach((id, i) => store.setCell("exercises", id, "order", i + 1));
+    }, 180);
   };
 
   return (
@@ -212,29 +210,26 @@ function RouteComponent() {
           </div>
         )}
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={exercises.map((e) => e.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {exercises.map((exercise) => (
-                <SortableExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  scheduleId={scheduleId}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className="space-y-2">
+          {exercises.map((exercise, index) => {
+            const anim =
+              animating.find((a) => a.id === exercise.id)?.direction ?? null;
+            return (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                scheduleId={scheduleId}
+                isFirst={index === 0}
+                isLast={index === exercises.length - 1}
+                animatingDirection={anim}
+                onMoveUp={() => move(index, index - 1)}
+                onMoveDown={() => move(index, index + 1)}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      {/* FAB */}
       <button
         onClick={() =>
           navigate({

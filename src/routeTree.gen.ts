@@ -19,6 +19,7 @@ import { Route as MeasurementsIndexRouteImport } from './routes/measurements/ind
 import { Route as FoodIndexRouteImport } from './routes/food/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
 import { Route as FoodLoggedRouteImport } from './routes/food/logged'
+import { Route as FoodAddRouteImport } from './routes/food/add'
 import { Route as ScheduleScheduleIdIndexRouteImport } from './routes/schedule/$scheduleId/index'
 import { Route as FoodFoodIdIndexRouteImport } from './routes/food/$foodId/index'
 import { Route as ScheduleScheduleIdStartRouteImport } from './routes/schedule/$scheduleId/start'
@@ -75,6 +76,11 @@ const FoodLoggedRoute = FoodLoggedRouteImport.update({
   path: '/food/logged',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FoodAddRoute = FoodAddRouteImport.update({
+  id: '/food/add',
+  path: '/food/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScheduleScheduleIdIndexRoute = ScheduleScheduleIdIndexRouteImport.update({
   id: '/schedule/$scheduleId/',
   path: '/schedule/$scheduleId/',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/report': typeof ReportRoute
+  '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/report': typeof ReportRoute
+  '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food': typeof FoodIndexRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/report': typeof ReportRoute
+  '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/'
     | '/history'
     | '/report'
+    | '/food/add'
     | '/food/logged'
     | '/schedule/create'
     | '/food/'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/'
     | '/history'
     | '/report'
+    | '/food/add'
     | '/food/logged'
     | '/schedule/create'
     | '/food'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/history'
     | '/report'
+    | '/food/add'
     | '/food/logged'
     | '/schedule/create'
     | '/food/'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
   ReportRoute: typeof ReportRoute
+  FoodAddRoute: typeof FoodAddRoute
   FoodLoggedRoute: typeof FoodLoggedRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   FoodIndexRoute: typeof FoodIndexRoute
@@ -299,6 +312,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoodLoggedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/food/add': {
+      id: '/food/add'
+      path: '/food/add'
+      fullPath: '/food/add'
+      preLoaderRoute: typeof FoodAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schedule/$scheduleId/': {
       id: '/schedule/$scheduleId/'
       path: '/schedule/$scheduleId'
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
   ReportRoute: ReportRoute,
+  FoodAddRoute: FoodAddRoute,
   FoodLoggedRoute: FoodLoggedRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   FoodIndexRoute: FoodIndexRoute,

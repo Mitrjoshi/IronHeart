@@ -2,75 +2,66 @@
 import { store } from "@/store/schema";
 import { useRowIds } from "tinybase/ui-react";
 
-const DAYS = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-
 export const useWeeklyStats = () => {
   const workoutIds = useRowIds("workouts", store);
   const workoutSetIds = useRowIds("workoutSets", store);
   const scheduleIds = useRowIds("schedules", store);
 
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
-  const weekStart = new Date(now);
-  weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(now.getDate() + diffToMonday);
+  const now = Date.now();
+  const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-  return DAYS.map((day) => {
-    const dayIndex = DAYS.indexOf(day);
-    const dayStart = new Date(weekStart);
-    dayStart.setDate(weekStart.getDate() + dayIndex);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setHours(23, 59, 59, 999);
+  // ✅ group by schedule
+  const statsMap: Record<
+    string,
+    {
+      scheduleName: string;
+      totalReps: number;
+      totalWeight: number;
+    }
+  > = {};
 
-    const dayWorkouts = workoutIds.filter((id) => {
-      const finishedAt = store.getCell("workouts", id, "finishedAt") as number;
-      return finishedAt >= dayStart.getTime() && finishedAt <= dayEnd.getTime();
-    });
-
-    const daySets = workoutSetIds.filter((setId) =>
-      dayWorkouts.includes(
-        store.getCell("workoutSets", setId, "workoutId") as string,
-      ),
-    );
-
-    const totalReps = daySets.reduce(
-      (sum, setId) =>
-        sum + (store.getCell("workoutSets", setId, "reps") as number),
-      0,
-    );
-
-    const totalWeight = daySets.reduce(
-      (sum, setId) =>
-        sum +
-        (store.getCell("workoutSets", setId, "reps") as number) *
-          (store.getCell("workoutSets", setId, "weight") as number),
-      0,
-    );
-
-    const totalDuration = daySets.reduce(
-      (sum, setId) =>
-        sum + (store.getCell("workoutSets", setId, "duration") as number),
-      0,
-    );
-
-    const scheduleId = scheduleIds.find(
-      (id) => store.getCell("schedules", id, "day") === day,
-    );
-    const scheduleName = scheduleId
-      ? (store.getCell("schedules", scheduleId, "name") as string)
-      : null;
-
-    return { day, totalReps, totalWeight, totalDuration, scheduleName };
+  // init
+  scheduleIds.forEach((id) => {
+    statsMap[id] = {
+      scheduleName: (store.getCell("schedules", id, "name") as string) || "—",
+      totalReps: 0,
+      totalWeight: 0,
+    };
   });
+
+  // aggregate
+  workoutIds.forEach((workoutId) => {
+    const finishedAt = store.getCell(
+      "workouts",
+      workoutId,
+      "finishedAt",
+    ) as number;
+
+    if (!finishedAt || finishedAt < oneWeekAgo) return;
+
+    const scheduleId = store.getCell(
+      "workouts",
+      workoutId,
+      "scheduleId",
+    ) as string;
+
+    if (!statsMap[scheduleId]) return;
+
+    workoutSetIds.forEach((setId) => {
+      if (store.getCell("workoutSets", setId, "workoutId") !== workoutId)
+        return;
+
+      const reps = (store.getCell("workoutSets", setId, "reps") as number) || 0;
+
+      const weight =
+        (store.getCell("workoutSets", setId, "weight") as number) || 0;
+
+      statsMap[scheduleId].totalReps += reps;
+      statsMap[scheduleId].totalWeight += reps * weight;
+    });
+  });
+
+  return Object.values(statsMap);
 };
 
 export const useExerciseProgress = (exerciseId: string) => {

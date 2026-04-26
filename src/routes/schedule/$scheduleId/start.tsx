@@ -10,6 +10,8 @@ import {
   useLoadSession,
   useSaveSession,
 } from "@/hooks/store/activeSession";
+import { useAllSuggestedSets } from "@/hooks/store/suggestedSets";
+import { useBlocker } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/schedule/$scheduleId/start")({
   component: RouteComponent,
@@ -96,75 +98,59 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-/* Exit dialog — no shadcn */
 function ExitDialog({
+  open,
   onSave,
   onDiscard,
+  onCancel,
 }: {
+  open: boolean;
   onSave: () => void;
   onDiscard: () => void;
+  onCancel: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  if (!open) return null;
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors"
-        style={{ background: S.redSurface, color: S.red }}
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)" }}
+        onClick={onCancel}
+      />
+      <div
+        className="relative z-10 w-full space-y-3 p-5"
+        style={{ ...S.card, borderRadius: 20 }}
       >
-        <SquareArrowRightExit size={15} /> Exit
-      </button>
-
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.7)" }}
-            onClick={() => setOpen(false)}
-          />
-          <div
-            className="relative z-10 w-full space-y-3 p-5"
-            style={{ ...S.card, borderRadius: 20 }}
+        <p className="text-base font-semibold">Exit Workout?</p>
+        <p className="text-sm" style={{ color: S.muted }}>
+          Your progress will be saved and you can continue later.
+        </p>
+        <div className="space-y-2 pt-1">
+          <button
+            onClick={onSave}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold"
+            style={{ background: S.surface, color: "#f5f5f5" }}
           >
-            <p className="text-base font-semibold">Exit Workout?</p>
-            <p className="text-sm" style={{ color: S.muted }}>
-              Your progress will be saved and you can continue later.
-            </p>
-            <div className="space-y-2 pt-1">
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  onSave();
-                }}
-                className="w-full rounded-xl py-2.5 text-sm font-semibold"
-                style={{ background: S.surface, color: "#f5f5f5" }}
-              >
-                Save & Exit
-              </button>
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  onDiscard();
-                }}
-                className="w-full rounded-xl py-2.5 text-sm font-semibold"
-                style={{ background: S.redSurface, color: S.red }}
-              >
-                Discard Workout
-              </button>
-              <button
-                onClick={() => setOpen(false)}
-                className="w-full rounded-xl py-2.5 text-sm"
-                style={{ color: S.muted }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+            Save & Exit
+          </button>
+          <button
+            onClick={onDiscard}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold"
+            style={{ background: S.redSurface, color: S.red }}
+          >
+            Discard Workout
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full rounded-xl py-2.5 text-sm"
+            style={{ color: S.muted }}
+          >
+            Cancel
+          </button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -183,12 +169,35 @@ function RouteComponent() {
 
   const [countdown, setCountdown] = useState(!isResuming);
   const [time, setTime] = useState(savedSession?.elapsedTime ?? 0);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const workoutIdRef = useRef<string | null>(savedSession?.workoutId ?? null);
   const [exerciseSets, setExerciseSets] = useState<ExerciseSets>(
     savedSession?.exerciseSets ?? {},
   );
+
+  const { proceed, reset, status } = useBlocker({
+    shouldBlockFn: () => true, // always block — we handle it ourselves
+    enableBeforeUnload: true,
+    withResolver: true,
+  });
+
+  const suggestions = useAllSuggestedSets(exercises);
+
+  useEffect(() => {
+    if (status === "blocked") setShowExitDialog(true);
+  }, [status]);
+
+  // Block reload / tab close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     if (!exercises.length) return;
@@ -208,16 +217,19 @@ function RouteComponent() {
     }
     setExerciseSets(
       Object.fromEntries(
-        exercises.map((ex) => [
-          ex.id,
-          ex.lastWorkoutSets?.length
-            ? ex.lastWorkoutSets.map((s) => ({
-                reps: String(s.reps),
-                weight: String(s.weight),
-                duration: String(s.duration ?? 0),
-              }))
-            : Array.from({ length: ex.numberOfSets || 1 }, emptySet),
-        ]),
+        exercises.map((ex) => {
+          const suggested = suggestions[ex.id];
+          return [
+            ex.id,
+            suggested?.length
+              ? suggested.map((s) => ({
+                  reps: s.reps,
+                  weight: s.weight,
+                  duration: s.duration,
+                }))
+              : Array.from({ length: ex.numberOfSets || 1 }, emptySet),
+          ];
+        }),
       ),
     );
   }, [exercises.length]);
@@ -292,17 +304,24 @@ function RouteComponent() {
     router.history.back();
   };
 
-  const handleExit = () => {
+  const handleSaveAndExit = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (workoutIdRef.current)
       saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
-    router.history.back();
+    setShowExitDialog(false);
+    proceed?.(); // let navigation go through
   };
 
   const handleDiscard = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     clearSession(scheduleId);
-    router.history.back();
+    setShowExitDialog(false);
+    proceed?.();
+  };
+
+  const handleCancelExit = () => {
+    setShowExitDialog(false);
+    reset?.(); // stay on page
   };
 
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -314,11 +333,26 @@ function RouteComponent() {
     <div style={S.page} className="min-h-screen">
       {countdown && <Countdown onComplete={handleCountdownComplete} />}
 
+      <ExitDialog
+        open={showExitDialog}
+        onSave={handleSaveAndExit}
+        onDiscard={handleDiscard}
+        onCancel={handleCancelExit}
+      />
+
       <Header
         showBack
         title={scheduleData?.name}
         subtitle={isResuming ? "Resuming Workout" : "Start your Workout"}
-        right={<ExitDialog onSave={handleExit} onDiscard={handleDiscard} />}
+        right={
+          <button
+            onClick={() => setShowExitDialog(true)}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors"
+            style={{ background: S.redSurface, color: S.red }}
+          >
+            <SquareArrowRightExit size={15} /> Exit
+          </button>
+        }
       />
 
       {/* Sticky timer */}
@@ -344,7 +378,6 @@ function RouteComponent() {
       <div className="space-y-3 px-4 pt-18 pb-4">
         {exercises.map((exercise) => (
           <div key={exercise.id} style={S.card} className="space-y-3 p-4">
-            {/* Exercise header */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">{exercise.name}</p>
@@ -356,57 +389,70 @@ function RouteComponent() {
               </div>
             </div>
 
-            {/* Sets */}
             <div className="space-y-2">
               {(exerciseSets[exercise.id] ?? []).map((set, i) => (
-                <div key={i} className="flex w-full min-w-0 items-center gap-2">
-                  <p
-                    className="w-6 shrink-0 text-center text-xs"
-                    style={{ color: S.mutedDark }}
+                <>
+                  <div
+                    key={i}
+                    className="flex w-full min-w-0 items-center gap-2"
                   >
-                    {i + 1}
-                  </p>
-                  {exercise.type === "weighted" && (
-                    <>
+                    <p
+                      className="w-6 shrink-0 text-center text-xs"
+                      style={{ color: S.mutedDark }}
+                    >
+                      {i + 1}
+                    </p>
+                    {exercise.type === "weighted" && (
+                      <>
+                        <SmallInput
+                          placeholder="Reps"
+                          value={set.reps}
+                          onChange={(v) => updateSet(exercise.id, i, "reps", v)}
+                        />
+                        <SmallInput
+                          placeholder="kg"
+                          value={set.weight}
+                          onChange={(v) =>
+                            updateSet(exercise.id, i, "weight", v)
+                          }
+                        />
+                      </>
+                    )}
+                    {exercise.type === "duration" && (
+                      <SmallInput
+                        placeholder="Duration (sec)"
+                        value={set.duration}
+                        onChange={(v) =>
+                          updateSet(exercise.id, i, "duration", v)
+                        }
+                      />
+                    )}
+                    {exercise.type === "bodyweight" && (
                       <SmallInput
                         placeholder="Reps"
                         value={set.reps}
                         onChange={(v) => updateSet(exercise.id, i, "reps", v)}
                       />
-                      <SmallInput
-                        placeholder="kg"
-                        value={set.weight}
-                        onChange={(v) => updateSet(exercise.id, i, "weight", v)}
-                      />
-                    </>
+                    )}
+                    <button
+                      disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
+                      onClick={() => removeSet(exercise.id, i)}
+                      className="shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30"
+                      style={{ background: S.surface, color: S.muted }}
+                    >
+                      <Minus size={14} />
+                    </button>
+                  </div>
+
+                  {!isResuming && suggestions[exercise.id]?.[i]?.hint && (
+                    <p className="ml-8 text-xs" style={{ color: S.amber }}>
+                      {suggestions[exercise.id][i].hint}
+                    </p>
                   )}
-                  {exercise.type === "duration" && (
-                    <SmallInput
-                      placeholder="Duration (sec)"
-                      value={set.duration}
-                      onChange={(v) => updateSet(exercise.id, i, "duration", v)}
-                    />
-                  )}
-                  {exercise.type === "bodyweight" && (
-                    <SmallInput
-                      placeholder="Reps"
-                      value={set.reps}
-                      onChange={(v) => updateSet(exercise.id, i, "reps", v)}
-                    />
-                  )}
-                  <button
-                    disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
-                    onClick={() => removeSet(exercise.id, i)}
-                    className="shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30"
-                    style={{ background: S.surface, color: S.muted }}
-                  >
-                    <Minus size={14} />
-                  </button>
-                </div>
+                </>
               ))}
             </div>
 
-            {/* Add set */}
             <button
               onClick={() => addSet(exercise.id)}
               className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-sm transition-colors"

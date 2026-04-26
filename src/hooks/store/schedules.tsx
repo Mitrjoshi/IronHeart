@@ -2,16 +2,6 @@ import { store } from "@/store/schema";
 import { useRow, useRowIds } from "tinybase/ui-react";
 import { v4 as uuid } from "uuid";
 
-const DAY_ORDER = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
-
 const SET_DURATION_SECONDS = 45;
 const REST_BETWEEN_SETS_SECONDS = 60;
 const REST_BETWEEN_EXERCISES_SECONDS = 90;
@@ -21,49 +11,74 @@ export const useAllSchedules = () => {
   const exerciseIds = useRowIds("exercises", store);
   const setIds = useRowIds("sets", store);
 
-  return ids
-    .map((id) => {
-      const scheduleExercises = exerciseIds.filter(
-        (exerciseId) =>
-          store.getCell("exercises", exerciseId, "scheduleId") === id,
-      );
+  const workoutIds = useRowIds("workouts", store);
 
-      const scheduleSets = setIds.filter((setId) =>
-        scheduleExercises.includes(
-          store.getCell("sets", setId, "exerciseId") as string,
-        ),
-      );
+  return ids.map((id) => {
+    const scheduleExercises = exerciseIds.filter(
+      (exerciseId) =>
+        store.getCell("exercises", exerciseId, "scheduleId") === id,
+    );
 
-      const totalSets = scheduleSets.length;
+    const scheduleSets = setIds.filter((setId) =>
+      scheduleExercises.includes(
+        store.getCell("sets", setId, "exerciseId") as string,
+      ),
+    );
 
-      const totalReps = scheduleSets.reduce(
-        (sum, setId) => sum + (store.getCell("sets", setId, "reps") as number),
-        0,
-      );
+    const totalSets = scheduleSets.length;
 
-      const estimatedSeconds =
-        totalSets * SET_DURATION_SECONDS +
-        totalSets * REST_BETWEEN_SETS_SECONDS +
-        scheduleExercises.length * REST_BETWEEN_EXERCISES_SECONDS;
+    const totalReps = scheduleSets.reduce(
+      (sum, setId) => sum + (store.getCell("sets", setId, "reps") as number),
+      0,
+    );
 
-      const estimatedMinutes = Math.ceil(estimatedSeconds / 60);
+    // ✅ NEW: get past session duration
+    const scheduleWorkouts = workoutIds
+      .filter(
+        (workoutId) =>
+          store.getCell("workouts", workoutId, "scheduleId") === id &&
+          (store.getCell("workouts", workoutId, "finishedAt") as number) > 0,
+      )
+      .map((workoutId) => ({
+        duration:
+          (store.getCell("workouts", workoutId, "durationSeconds") as number) ||
+          0,
+        finishedAt: store.getCell(
+          "workouts",
+          workoutId,
+          "finishedAt",
+        ) as number,
+      }))
+      .sort((a, b) => b.finishedAt - a.finishedAt);
 
-      return {
-        id,
-        name: store.getCell("schedules", id, "name") as string,
-        day: store.getCell("schedules", id, "day") as string,
-        totalSets,
-        totalReps,
-        estimatedMinutes,
-        exercises: scheduleExercises
-          .map(
-            (exerciseId) =>
-              store.getCell("exercises", exerciseId, "name") as string,
-          )
-          .join(", "),
-      };
-    })
-    .sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+    const lastDurationSeconds = scheduleWorkouts[0]?.duration ?? 0;
+
+    // fallback if no history
+    const estimatedSeconds =
+      totalSets * SET_DURATION_SECONDS +
+      totalSets * REST_BETWEEN_SETS_SECONDS +
+      scheduleExercises.length * REST_BETWEEN_EXERCISES_SECONDS;
+
+    const finalSeconds =
+      lastDurationSeconds > 0 ? lastDurationSeconds : estimatedSeconds;
+
+    const minutes = Math.ceil(finalSeconds / 60);
+
+    return {
+      id,
+      name: store.getCell("schedules", id, "name") as string,
+      day: store.getCell("schedules", id, "day") as string,
+      totalSets,
+      totalReps,
+      durationMinutes: minutes, // 👈 renamed (important)
+      exercises: scheduleExercises
+        .map(
+          (exerciseId) =>
+            store.getCell("exercises", exerciseId, "name") as string,
+        )
+        .join(", "),
+    };
+  });
 };
 
 const DAYS = [

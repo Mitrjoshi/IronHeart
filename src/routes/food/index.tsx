@@ -1,16 +1,17 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Header } from "@/components/Header";
 import { FOODS } from "@/constants/foods";
+import { useCustomFoods } from "@/hooks/store/useCustomFoods";
 import { normalizeFood } from "@/utils";
-import { createFileRoute } from "@tanstack/react-router";
-import { ChevronRight, Search } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronRight, Plus, Search } from "lucide-react";
 import React from "react";
 import { z } from "zod";
 
 export const Route = createFileRoute("/food/")({
   component: RouteComponent,
   validateSearch: z.object({
-    search: z.string().catch(""),
+    search: z.string().optional().catch(""),
   }),
 });
 
@@ -44,6 +45,8 @@ function RouteComponent() {
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
   const sentinelRef = React.useRef<HTMLDivElement>(null);
 
+  const customFoods = useCustomFoods();
+
   React.useEffect(() => {
     const t = setTimeout(
       () => navigate({ search: { search: inputValue } }),
@@ -56,13 +59,21 @@ function RouteComponent() {
     setVisibleCount(PAGE_SIZE);
   }, [searchTerm]);
 
-  const normalizedFoods = React.useMemo(
-    () =>
-      FOODS.filter((f) =>
-        f.food_name.toLowerCase().includes(searchTerm.toLowerCase()),
-      ).map(normalizeFood),
-    [searchTerm],
-  );
+  const lowerSearch = searchTerm?.toLowerCase();
+
+  const mergedFoods = React.useMemo(() => {
+    const normalizedStatic = FOODS.map(normalizeFood);
+    const normalizedCustom = customFoods.map(normalizeFood);
+    return [...normalizedCustom, ...normalizedStatic];
+  }, [customFoods]);
+
+  const normalizedFoods = React.useMemo(() => {
+    if (!lowerSearch) return mergedFoods;
+
+    return mergedFoods.filter((f) =>
+      f.name.toLowerCase().includes(lowerSearch),
+    );
+  }, [lowerSearch, mergedFoods]);
 
   const visibleFoods = normalizedFoods.slice(0, visibleCount);
   const hasMore = visibleCount < normalizedFoods.length;
@@ -81,7 +92,21 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header title="Food" subtitle="Track your meals" />
+      <Header
+        right={
+          <Link to="/food/add">
+            <button
+              className="flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-opacity active:opacity-80"
+              style={{ background: S.amber, color: "#0e0e0e" }}
+            >
+              <Plus size={14} />
+              Add food
+            </button>
+          </Link>
+        }
+        title="Food"
+        subtitle="Track your meals"
+      />
 
       <div style={S.page} className="min-h-screen pt-20 pb-8">
         {/* Search */}
@@ -106,14 +131,20 @@ function RouteComponent() {
         </div>
 
         {/* Results count */}
-        {searchTerm && (
-          <div className="px-4 py-2">
-            <p className="text-xs" style={{ color: S.mutedDark }}>
-              {normalizedFoods.length} result
-              {normalizedFoods.length !== 1 ? "s" : ""} for "{searchTerm}"
-            </p>
+        <div className="flex items-center justify-between px-4 py-2">
+          <div>
+            {searchTerm && (
+              <p className="text-xs" style={{ color: S.mutedDark }}>
+                {normalizedFoods.length} result
+                {normalizedFoods.length !== 1 ? "s" : ""} for "{searchTerm}"
+              </p>
+            )}
           </div>
-        )}
+
+          <p className="text-xs" style={{ color: S.mutedDark }}>
+            {mergedFoods.length} food items
+          </p>
+        </div>
 
         {/* Food list */}
         <div className="space-y-2 px-4 pt-2">
@@ -131,9 +162,24 @@ function RouteComponent() {
             >
               {/* Top row */}
               <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-2">
-                <p className="min-w-0 flex-1 truncate text-sm leading-snug font-medium">
-                  {food.name}
-                </p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate text-sm leading-snug font-medium">
+                    {food.name}
+                  </p>
+
+                  {food.food_code.startsWith("CUSTOM") && (
+                    <span
+                      className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                      style={{
+                        background: "rgba(245, 158, 11, 0.15)",
+                        color: "#f59e0b",
+                      }}
+                    >
+                      Custom
+                    </span>
+                  )}
+                </div>
+
                 <ChevronRight
                   size={15}
                   className="shrink-0"

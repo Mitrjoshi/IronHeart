@@ -226,7 +226,7 @@ function RouteComponent() {
           >
             Profile
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-row items-center gap-2">
             {[
               {
                 label: "Height (cm)",
@@ -240,12 +240,6 @@ function RouteComponent() {
                 placeholder: "75",
                 value: targetWeight,
                 onChange: setTargetWeight,
-              },
-              {
-                label: "Start (kg)",
-                placeholder: "85",
-                value: startWeight,
-                onChange: setStartWeight,
               },
             ].map(({ label, placeholder, value, onChange }) => (
               <div key={label} className="space-y-1">

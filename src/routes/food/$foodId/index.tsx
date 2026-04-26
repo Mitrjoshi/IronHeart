@@ -4,6 +4,11 @@ import { normalizeFood } from "@/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import React from "react";
 import { useAddFoodEntry, useGetOrCreateMeal } from "@/hooks/store/food";
+import {
+  useCustomFoods,
+  useDeleteCustomFood,
+} from "@/hooks/store/useCustomFoods";
+import { Trash } from "lucide-react";
 
 export const Route = createFileRoute("/food/$foodId/")({
   component: RouteComponent,
@@ -19,11 +24,13 @@ const S = {
     border: "1px solid #1f1f1f",
     borderRadius: 16,
   },
-  divider: { background: "#1f1f1f" },
   muted: "#737373",
   mutedDark: "#404040",
   amber: "#f59e0b",
+  red: "#ef4444",
+  redSurface: "#2a1515",
   surface: "#1f1f1f",
+  divider: { background: "#1f1f1f" },
 };
 
 const MACRO_CONFIG = [
@@ -71,10 +78,12 @@ function RouteComponent() {
   const addFoodEntry = useAddFoodEntry();
   const getOrCreateMeal = useGetOrCreateMeal();
 
-  const food = React.useMemo(
-    () => FOODS.filter((f) => f.food_code === foodId).map(normalizeFood)[0],
-    [foodId],
-  );
+  const customFoods = useCustomFoods();
+
+  const food = React.useMemo(() => {
+    const allFoods = [...customFoods, ...FOODS];
+    return allFoods.filter((f) => f.food_code === foodId).map(normalizeFood)[0];
+  }, [foodId, customFoods]);
 
   const scaled = React.useMemo(
     () => ({
@@ -231,12 +240,28 @@ function RouteComponent() {
     vitamins: microVitamins,
   };
 
+  const deleteFood = useDeleteCustomFood();
+
   return (
     <div style={S.page} className="min-h-screen">
       <Header
         showBack
         title={food.name}
-        subtitle={`${food.food_code} · per ${food.base.quantity}${food.serving.measurement} · ${food.serving.primarysource}`}
+        right={
+          foodId.includes("CUSTOM_") && (
+            <button
+              onClick={() => {
+                deleteFood(foodId);
+                router.history.back();
+              }}
+              className="rounded-xl p-2 transition-colors"
+              style={{ background: S.redSurface, color: S.red }}
+            >
+              <Trash size={16} />
+            </button>
+          )
+        }
+        subtitle={`${food.food_code} · per ${food.base.quantity}${food.serving.measurement}`}
       />
 
       <div className="space-y-3 px-4 pt-20 pb-8">
