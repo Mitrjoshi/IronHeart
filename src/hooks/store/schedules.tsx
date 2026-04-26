@@ -70,7 +70,7 @@ export const useAllSchedules = () => {
       day: store.getCell("schedules", id, "day") as string,
       totalSets,
       totalReps,
-      durationMinutes: minutes, // 👈 renamed (important)
+      durationSeconds: finalSeconds, // raw seconds instead of minutes
       exercises: scheduleExercises
         .map(
           (exerciseId) =>

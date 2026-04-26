@@ -365,8 +365,11 @@ function RouteComponent() {
                       </p>
                     </div>
                     <div className="ml-3 flex shrink-0 items-center gap-2">
-                      <p className="text-xs" style={{ color: S.mutedDark }}>
-                        {formatDuration(split.durationMinutes)}
+                      <p
+                        className="font-mono text-xs"
+                        style={{ color: S.amber }}
+                      >
+                        {formatDuration(split.durationSeconds)}
                       </p>
                       <ChevronRight size={15} style={{ color: S.mutedDark }} />
                     </div>

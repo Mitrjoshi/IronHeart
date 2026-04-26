@@ -14,16 +14,14 @@ export const formatElapsedTime = (ms: number) => {
   return `${sec}s`;
 };
 
-export const formatDuration = (seconds: number): string => {
-  if (!seconds || seconds <= 0) return "0s";
+export const formatDuration = (seconds: number) => {
+  const hr = Math.floor(seconds / 3600);
+  const min = Math.floor((seconds % 3600) / 60);
+  const sec = seconds % 60;
 
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+  if (hr > 0) return `${hr}h ${min}m ${sec}s`;
+  if (min > 0) return `${min}m ${sec}s`;
+  return `${sec}s`;
 };
 
 export const formatVolume = (volume: number) => {

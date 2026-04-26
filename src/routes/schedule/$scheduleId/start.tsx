@@ -178,8 +178,10 @@ function RouteComponent() {
     savedSession?.exerciseSets ?? {},
   );
 
+  const skipBlockerRef = useRef(false);
+
   const { proceed, reset, status } = useBlocker({
-    shouldBlockFn: () => true, // always block — we handle it ourselves
+    shouldBlockFn: () => !skipBlockerRef.current,
     enableBeforeUnload: true,
     withResolver: true,
   });
@@ -301,6 +303,7 @@ function RouteComponent() {
       ),
     );
     clearSession(scheduleId);
+    skipBlockerRef.current = true; // skip the dialog for this navigation
     router.history.back();
   };
 
