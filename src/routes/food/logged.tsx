@@ -1,12 +1,17 @@
 import { Header } from "@/components/Header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React from "react";
-import { useMealEntriesByType, useMealTotals } from "@/hooks/store/food";
+import {
+  useMealEntriesByType,
+  useMealsForDay,
+  useMealTotals,
+} from "@/hooks/store/food";
 import { ChevronRight, Pen, Trash2 } from "lucide-react";
 import { useDeleteFoodEntry } from "@/hooks/store/food";
 import { DaySelector } from "@/components/DaySelector";
 import { Button } from "@/components/ui/button";
 import { capitalize } from "@/utils";
+import { useNutritionTargets } from "@/hooks/store/weight";
 
 export const Route = createFileRoute("/food/logged")({
   component: RouteComponent,
@@ -22,6 +27,87 @@ const macroColors: Record<string, string> = {
   Fats: "text-rose-400",
 };
 
+const S = {
+  page: { background: "#0e0e0e", color: "#f5f5f5", minHeight: "100vh" },
+  card: {
+    background: "#161616",
+    border: "1px solid #1f1f1f",
+    borderRadius: 16,
+  },
+  divider: { borderColor: "#1f1f1f" },
+  muted: "#737373",
+  mutedDark: "#404040",
+  amber: "#f59e0b",
+  surface: "#1f1f1f",
+};
+
+function SectionLabel({
+  label,
+  linkLabel,
+  onLink,
+}: {
+  label: string;
+  linkLabel?: string;
+  onLink?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <p
+        className="text-xs font-semibold tracking-widest uppercase"
+        style={{ color: S.muted }}
+      >
+        {label}
+      </p>
+      {linkLabel && (
+        <button
+          onClick={onLink}
+          className="flex items-center gap-0.5 text-xs transition-colors"
+          style={{ color: S.muted }}
+        >
+          {linkLabel} <ChevronRight size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function MacroBar({
+  label,
+  value,
+  target,
+  unit,
+  color,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  unit: string;
+  color: string;
+}) {
+  const pct = Math.min((value / target) * 100, 100);
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span style={{ color }}>{label}</span>
+        <span style={{ color: S.muted }}>
+          {value.toFixed(1)}
+          {unit} / {target}
+          {unit}
+        </span>
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full"
+        style={{ background: "#262626" }}
+      >
+        <div
+          className="h-1.5 rounded-full transition-all"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function RouteComponent() {
   const navigate = useNavigate();
   const [selectedMeal, setSelectedMeal] = React.useState<MealType>("breakfast");
@@ -30,6 +116,11 @@ function RouteComponent() {
   const entries = useMealEntriesByType(selectedMeal, selectedDate.getTime());
   const totals = useMealTotals(selectedMeal, selectedDate.getTime());
   const deleteEntry = useDeleteFoodEntry();
+
+  const TARGETS = useNutritionTargets();
+  const meals = useMealsForDay();
+
+  const remaining = (TARGETS.calories - totals.calories).toFixed(0);
 
   return (
     <div
@@ -55,6 +146,90 @@ function RouteComponent() {
       <div className="space-y-5 pt-20 pb-8">
         {/* Day selector */}
         <DaySelector onChange={setSelectedDate} selectedDate={selectedDate} />
+
+        {/* Nutrition */}
+        <div className="space-y-3 px-4">
+          <SectionLabel
+            label="Day's Nutrition"
+            linkLabel="View logs"
+            onLink={() => navigate({ to: "/food/logged" })}
+          />
+
+          <div style={S.card} className="space-y-4 p-4">
+            {/* Calorie headline */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-3xl font-bold" style={{ color: S.amber }}>
+                  {totals.calories.toFixed(0)}
+                  <span
+                    className="ml-1 text-base font-normal"
+                    style={{ color: S.muted }}
+                  >
+                    kcal
+                  </span>
+                </p>
+                <p className="mt-0.5 text-xs" style={{ color: S.mutedDark }}>
+                  {Number(remaining) >= 0
+                    ? `${remaining} kcal remaining`
+                    : `${Math.abs(Number(remaining))} kcal over`}
+                </p>
+              </div>
+              <p className="text-sm" style={{ color: S.muted }}>
+                / {TARGETS.calories} kcal
+              </p>
+            </div>
+
+            {/* Macro bars */}
+            <div className="space-y-2.5">
+              <MacroBar
+                label="Protein"
+                value={totals.protein}
+                target={TARGETS.protein}
+                unit="g"
+                color="#818cf8"
+              />
+              <MacroBar
+                label="Carbs"
+                value={totals.carbs}
+                target={TARGETS.carbs}
+                unit="g"
+                color="#34d399"
+              />
+              <MacroBar
+                label="Fats"
+                value={totals.fats}
+                target={TARGETS.fats}
+                unit="g"
+                color="#fb923c"
+              />
+            </div>
+          </div>
+
+          {/* Meal breakdown */}
+          {meals
+            .filter((m) => m.entries.length > 0)
+            .map((meal) => (
+              <div
+                key={meal.id}
+                style={S.card}
+                className="flex items-start justify-between px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium capitalize">{meal.name}</p>
+                  <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
+                    {meal.entries.map((e) => e.foodName).join(", ")}
+                  </p>
+                </div>
+                <p
+                  className="ml-3 shrink-0 text-sm font-semibold"
+                  style={{ color: S.amber }}
+                >
+                  {meal.entries.reduce((s, e) => s + e.calories, 0).toFixed(0)}{" "}
+                  kcal
+                </p>
+              </div>
+            ))}
+        </div>
 
         {/* Meal pills */}
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
