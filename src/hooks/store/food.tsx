@@ -187,24 +187,20 @@ export const useGetOrCreateMeal = () => {
 
 export const useMealEntriesByType = (
   mealName: MealName,
-  dayTs?: number,
+  dayTs: number,
 ): FoodEntry[] => {
-  const ts = dayTs ?? Date.now();
-  const start = new Date(ts).setHours(0, 0, 0, 0);
-  const end = new Date(ts).setHours(23, 59, 59, 999);
+  const start = new Date(dayTs).setHours(0, 0, 0, 0);
+  const end = new Date(dayTs).setHours(23, 59, 59, 999);
 
   const mealIds = useRowIds("meals", store);
   const entryIds = useRowIds("foodEntries", store);
 
-  // Step 1: get mealIds matching name + day
   const filteredMealIds = mealIds.filter((id) => {
     const name = store.getCell("meals", id, "name") as MealName;
     const loggedAt = store.getCell("meals", id, "loggedAt") as number;
-
     return name === mealName && loggedAt >= start && loggedAt <= end;
   });
 
-  // Step 2: get entries belonging to those meals
   return entryIds
     .filter((eid) =>
       filteredMealIds.includes(
@@ -226,7 +222,7 @@ export const useMealEntriesByType = (
     }));
 };
 
-export const useMealTotals = (mealName: MealName, dayTs?: number) => {
+export const useMealTotals = (mealName: MealName, dayTs: number) => {
   const entries = useMealEntriesByType(mealName, dayTs);
 
   return entries.reduce(

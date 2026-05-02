@@ -131,14 +131,21 @@ function RouteComponent() {
             onLink={() => navigate({ to: "/report" })}
           />
           <div style={S.card} className="p-4">
-            <WeeklyGraph />
-            <button
+            <div className="space-y-4">
+              {/* <DaySelector
+                onChange={setSelectedDate}
+                selectedDate={selectedDate}
+              /> */}
+
+              <WeeklyGraph />
+            </div>
+            {/* <button
               onClick={() => navigate({ to: "/report" })}
               className="mt-3 w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
               style={{ background: S.surface, color: "#f5f5f5" }}
             >
               View Detailed Report
-            </button>
+            </button> */}
           </div>
         </div>
 

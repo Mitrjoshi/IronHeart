@@ -27,8 +27,8 @@ function RouteComponent() {
   const [selectedMeal, setSelectedMeal] = React.useState<MealType>("breakfast");
   const [selectedDate, setSelectedDate] = React.useState(new Date());
 
-  const entries = useMealEntriesByType(selectedMeal);
-  const totals = useMealTotals(selectedMeal);
+  const entries = useMealEntriesByType(selectedMeal, selectedDate.getTime());
+  const totals = useMealTotals(selectedMeal, selectedDate.getTime());
   const deleteEntry = useDeleteFoodEntry();
 
   return (
