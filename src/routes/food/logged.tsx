@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React from "react";
 import {
+  useDailyTotals,
   useMealEntriesByType,
   useMealsForDay,
   useMealTotals,
@@ -115,6 +116,7 @@ function RouteComponent() {
 
   const entries = useMealEntriesByType(selectedMeal, selectedDate.getTime());
   const totals = useMealTotals(selectedMeal, selectedDate.getTime());
+  const dailyTotals = useDailyTotals(selectedDate.getTime());
   const deleteEntry = useDeleteFoodEntry();
 
   const TARGETS = useNutritionTargets();
@@ -160,7 +162,7 @@ function RouteComponent() {
             <div className="flex items-end justify-between">
               <div>
                 <p className="text-3xl font-bold" style={{ color: S.amber }}>
-                  {totals.calories.toFixed(0)}
+                  {dailyTotals.calories.toFixed(0)}
                   <span
                     className="ml-1 text-base font-normal"
                     style={{ color: S.muted }}
@@ -183,21 +185,21 @@ function RouteComponent() {
             <div className="space-y-2.5">
               <MacroBar
                 label="Protein"
-                value={totals.protein}
+                value={dailyTotals.protein}
                 target={TARGETS.protein}
                 unit="g"
                 color="#818cf8"
               />
               <MacroBar
                 label="Carbs"
-                value={totals.carbs}
+                value={dailyTotals.carbs}
                 target={TARGETS.carbs}
                 unit="g"
                 color="#34d399"
               />
               <MacroBar
                 label="Fats"
-                value={totals.fats}
+                value={dailyTotals.fats}
                 target={TARGETS.fats}
                 unit="g"
                 color="#fb923c"
