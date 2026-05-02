@@ -150,7 +150,7 @@ function RouteComponent() {
         {/* Nutrition */}
         <div className="space-y-3 px-4">
           <SectionLabel
-            label="Day's Nutrition"
+            label="Total Nutrition"
             linkLabel="View logs"
             onLink={() => navigate({ to: "/food/logged" })}
           />
@@ -231,31 +231,40 @@ function RouteComponent() {
             ))}
         </div>
 
-        {/* Meal pills */}
-        <div className="no-scrollbar flex gap-2 overflow-x-auto px-4">
-          {MEAL_OPTIONS.map((meal) => (
-            <button
-              key={meal}
-              onClick={() => setSelectedMeal(meal)}
-              className="shrink-0 rounded-full px-4 py-1.5 text-sm capitalize transition-all"
-              style={
-                selectedMeal === meal
-                  ? {
-                      background: "#f59e0b",
-                      color: "#0e0e0e",
-                      fontWeight: 600,
-                      border: "1px solid #f59e0b",
-                    }
-                  : {
-                      background: "transparent",
-                      color: "#737373",
-                      border: "1px solid #262626",
-                    }
-              }
-            >
-              {meal}
-            </button>
-          ))}
+        <div className="space-y-4 px-4">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: S.muted }}
+          >
+            Meal Breakdown
+          </p>
+
+          {/* Meal pills */}
+          <div className="no-scrollbar flex gap-2 overflow-x-auto">
+            {MEAL_OPTIONS.map((meal) => (
+              <button
+                key={meal}
+                onClick={() => setSelectedMeal(meal)}
+                className="shrink-0 rounded-full px-4 py-1.5 text-sm capitalize transition-all"
+                style={
+                  selectedMeal === meal
+                    ? {
+                        background: "#f59e0b",
+                        color: "#0e0e0e",
+                        fontWeight: 600,
+                        border: "1px solid #f59e0b",
+                      }
+                    : {
+                        background: "transparent",
+                        color: "#737373",
+                        border: "1px solid #262626",
+                      }
+                }
+              >
+                {meal}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Macro tiles */}
