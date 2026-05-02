@@ -38,6 +38,27 @@ export const WeeklyGraph = () => {
 
   return (
     <div className="space-y-4">
+      {/* Legend */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="h-2.5 w-2.5 rounded-sm"
+            style={{ background: S.amber }}
+          />
+          <span className="text-xs" style={{ color: S.muted }}>
+            Reps
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div
+            className="h-2.5 w-2.5 rounded-sm"
+            style={{ background: S.indigo }}
+          />
+          <span className="text-xs" style={{ color: S.muted }}>
+            Volume (kg)
+          </span>
+        </div>
+      </div>
       <ChartContainer className="outline-none!" config={chartConfig}>
         <BarChart data={weeklyStats}>
           <CartesianGrid vertical={false} stroke="#1f1f1f" />
@@ -76,28 +97,6 @@ export const WeeklyGraph = () => {
           />
         </BarChart>
       </ChartContainer>
-
-      {/* Legend */}
-      <div className="flex items-center justify-end gap-4">
-        <div className="flex items-center gap-1.5">
-          <div
-            className="h-2.5 w-2.5 rounded-sm"
-            style={{ background: S.amber }}
-          />
-          <span className="text-xs" style={{ color: S.muted }}>
-            Reps
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className="h-2.5 w-2.5 rounded-sm"
-            style={{ background: S.indigo }}
-          />
-          <span className="text-xs" style={{ color: S.muted }}>
-            Volume (kg)
-          </span>
-        </div>
-      </div>
     </div>
   );
 };
