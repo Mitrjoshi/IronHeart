@@ -58,14 +58,6 @@ function RouteComponent() {
         showBack
         title={scheduleData?.name}
         subtitle="Edit your schedule"
-        right={
-          <button
-            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-opacity active:opacity-80"
-            style={{ background: S.amber, color: "#0e0e0e" }}
-          >
-            Save
-          </button>
-        }
       />
 
       <div className="space-y-3 px-4 pt-24">
