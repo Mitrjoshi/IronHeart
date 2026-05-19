@@ -3,6 +3,7 @@ import {
   useDeleteExercise,
   useExerciseById,
   useUpdateExercise,
+  useUpdateExerciseMeta,
   type ExerciseType,
 } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
@@ -72,10 +73,13 @@ function RouteComponent() {
   const excerciseData = useExerciseById(excerciseId);
   const deleteExercise = useDeleteExercise();
   const updateExercise = useUpdateExercise();
+  const updateExerciseMeta = useUpdateExerciseMeta();
 
   const [isEditingMeta, setIsEditingMeta] = React.useState(false);
-  const [editName, setEditName] = React.useState("");
-  const [editType, setEditType] = React.useState<ExerciseType>("weighted");
+  const [editName, setEditName] = React.useState(excerciseData?.name ?? "");
+  const [editType, setEditType] = React.useState<ExerciseType>(
+    (excerciseData?.type ?? "weighted") as ExerciseType,
+  );
 
   const [sets, setSets] = React.useState<Set[]>(
     () =>
@@ -89,9 +93,8 @@ function RouteComponent() {
 
   if (!excerciseData) return null;
 
-  const exerciseType = isEditingMeta
-    ? editType
-    : ((excerciseData?.type ?? "weighted") as ExerciseType);
+  // editType is the single source of truth for which inputs to render
+  const exerciseType = editType;
 
   const handleStartEdit = () => {
     setEditName(excerciseData.name);
@@ -100,15 +103,26 @@ function RouteComponent() {
   };
 
   const handleCancelEdit = () => {
+    // revert any unsaved edits
+    setEditName(excerciseData.name);
+    setEditType((excerciseData.type ?? "weighted") as ExerciseType);
     setIsEditingMeta(false);
   };
 
   const handleConfirmEdit = () => {
-    setIsEditingMeta(false);
+    const typeChanged = editType !== excerciseData.type;
+    const finalName = editName.trim() || excerciseData.name;
+
+    // ✅ persist name + type immediately on "Done"
+    updateExerciseMeta(excerciseId, finalName, editType);
+
     // if type changed, reset sets to a single empty set
-    if (editType !== excerciseData.type) {
+    if (typeChanged) {
       setSets([emptySet()]);
     }
+
+    setEditName(finalName);
+    setIsEditingMeta(false);
   };
 
   const updateSet = (i: number, field: keyof Set, value: string) =>
@@ -123,7 +137,8 @@ function RouteComponent() {
   const handleUpdate = () => {
     updateExercise(
       excerciseId,
-      isEditingMeta ? editName : excerciseData.name,
+      editName.trim() || excerciseData.name,
+      editType,
       sets.map((s) => ({
         id: s.id,
         reps: Number(s.reps) || 0,
@@ -186,7 +201,7 @@ function RouteComponent() {
                       onClick={() => setEditType(t)}
                       className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
                       style={
-                        exerciseType === t
+                        editType === t
                           ? { background: S.amber, color: "#0e0e0e" }
                           : {
                               background: S.surface,

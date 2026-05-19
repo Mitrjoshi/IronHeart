@@ -227,13 +227,23 @@ export const useDeleteExercise = () => {
   };
 };
 
+// ✅ NEW: updates only the exercise meta (name + type), used by the "Done" button
+export const useUpdateExerciseMeta = () => {
+  return (id: string, name: string, type: ExerciseType) => {
+    store.setCell("exercises", id, "name", name);
+    store.setCell("exercises", id, "type", type);
+  };
+};
+
 export const useUpdateExercise = () => {
   return (
     id: string,
     name: string,
+    type: ExerciseType,
     sets: { id?: string; reps: number; weight: number; duration: number }[],
   ) => {
     store.setCell("exercises", id, "name", name);
+    store.setCell("exercises", id, "type", type);
 
     const existingSetIds = store
       .getRowIds("sets")

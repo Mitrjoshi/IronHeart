@@ -286,3 +286,15 @@ export const useAddSchedule = () => {
     return id;
   };
 };
+
+export const useUpdateSchedule = () => {
+  return (id: string, updates: { name?: string; day?: string }) => {
+    if (updates.name !== undefined) {
+      store.setCell("schedules", id, "name", updates.name);
+    }
+
+    if (updates.day !== undefined) {
+      store.setCell("schedules", id, "day", updates.day.toLowerCase());
+    }
+  };
+};
