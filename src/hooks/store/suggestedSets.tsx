@@ -21,11 +21,7 @@ export const useAllSuggestedSets = (
         exerciseId,
         "type",
       ) as string;
-      const targetRepsMin = store.getCell(
-        "exercises",
-        exerciseId,
-        "targetRepsMin",
-      ) as number | undefined;
+
       const targetRepsMax = store.getCell(
         "exercises",
         exerciseId,
@@ -83,29 +79,24 @@ export const useAllSuggestedSets = (
             prevSet.weight === set.weight &&
             prevSet.reps === set.reps;
 
-          let suggestedWeight = set.weight;
-          let suggestedReps = set.reps;
           let hint = "Same as last session";
 
           if (repsHitMax) {
             const increment = set.weight >= 60 ? 5 : 2.5;
-            suggestedWeight = set.weight + increment;
-            suggestedReps = targetRepsMin ?? set.reps;
-            hint = `↑ Hit rep target — +${increment}kg, reset reps`;
+            hint = `↑ Hit rep target — try +${increment}kg next set`;
           } else if (sameWeightBothSessions) {
             const increment = set.weight >= 60 ? 5 : 2.5;
-            suggestedWeight = set.weight + increment;
             hint = `↑ Plateau — try +${increment}kg`;
           } else if (prevSet && set.weight > prevSet.weight) {
-            suggestedReps = set.reps + 1;
-            hint = "Hold weight, add 1 rep";
+            hint = "Hold weight, try +1 rep";
           } else if (prevSet && set.reps > prevSet.reps) {
             hint = "↑ Good progress";
           }
 
+          // ✅ Always prefill with actual last-session values
           return {
-            reps: String(suggestedReps),
-            weight: String(suggestedWeight),
+            reps: String(set.reps),
+            weight: String(set.weight),
             duration: "",
             hint,
           };
@@ -114,10 +105,12 @@ export const useAllSuggestedSets = (
         if (exerciseType === "bodyweight") {
           const sameRepsBothSessions = prevSet && prevSet.reps === set.reps;
           return {
-            reps: String(sameRepsBothSessions ? set.reps + 2 : set.reps),
+            reps: String(set.reps), // ✅ last session value, not +2
             weight: "",
             duration: "",
-            hint: sameRepsBothSessions ? "↑ Add 2 reps" : "↑ Good progress",
+            hint: sameRepsBothSessions
+              ? "↑ Try adding 2 reps"
+              : "↑ Good progress",
           };
         }
 
@@ -127,10 +120,10 @@ export const useAllSuggestedSets = (
           return {
             reps: "",
             weight: "",
-            duration: String(
-              sameDurationBothSessions ? set.duration + 15 : set.duration,
-            ),
-            hint: sameDurationBothSessions ? "↑ Add 15 sec" : "↑ Good progress",
+            duration: String(set.duration), // ✅ last session value, not +15
+            hint: sameDurationBothSessions
+              ? "↑ Try adding 15 sec"
+              : "↑ Good progress",
           };
         }
 

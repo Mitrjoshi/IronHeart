@@ -201,6 +201,9 @@ function RouteComponent() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
+  // Replace the hasInitialized ref + exerciseSets init effect
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
     if (!exercises.length) return;
     if (isResuming) {
@@ -215,8 +218,18 @@ function RouteComponent() {
         }
         return Object.keys(patch).length ? { ...prev, ...patch } : prev;
       });
+      hasInitialized.current = true;
       return;
     }
+
+    // ✅ Wait until at least one exercise has a suggestion or confirmed no history
+    const suggestionsReady = exercises.every(
+      (ex) => suggestions[ex.id] !== undefined,
+    );
+    if (!suggestionsReady || hasInitialized.current) return;
+
+    hasInitialized.current = true;
+
     setExerciseSets(
       Object.fromEntries(
         exercises.map((ex) => {
@@ -234,7 +247,7 @@ function RouteComponent() {
         }),
       ),
     );
-  }, [exercises.length]);
+  }, [exercises.length, suggestions]);
 
   const tick = () => {
     if (startRef.current !== null) {
