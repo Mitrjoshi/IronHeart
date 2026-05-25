@@ -174,6 +174,8 @@ function RouteComponent() {
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const workoutIdRef = useRef<string | null>(savedSession?.workoutId ?? null);
+  const hasInitialized = useRef(false);
+
   const [exerciseSets, setExerciseSets] = useState<ExerciseSets>(
     savedSession?.exerciseSets ?? {},
   );
@@ -186,6 +188,7 @@ function RouteComponent() {
     withResolver: true,
   });
 
+  // suggestions are used only for hints — prefill comes from lastWorkoutSets
   const suggestions = useAllSuggestedSets(exercises);
 
   useEffect(() => {
@@ -201,11 +204,10 @@ function RouteComponent() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  // Replace the hasInitialized ref + exerciseSets init effect
-  const hasInitialized = useRef(false);
-
   useEffect(() => {
     if (!exercises.length) return;
+
+    // Resuming: patch in any new exercises that weren't in the saved session
     if (isResuming) {
       setExerciseSets((prev) => {
         const patch: ExerciseSets = {};
@@ -222,32 +224,37 @@ function RouteComponent() {
       return;
     }
 
-    // ✅ Wait until at least one exercise has a suggestion or confirmed no history
-    const suggestionsReady = exercises.every(
-      (ex) => suggestions[ex.id] !== undefined,
-    );
-    if (!suggestionsReady || hasInitialized.current) return;
-
+    // Already initialized — don't overwrite user edits
+    if (hasInitialized.current) return;
     hasInitialized.current = true;
 
     setExerciseSets(
       Object.fromEntries(
         exercises.map((ex) => {
-          const suggested = suggestions[ex.id];
+          // ✅ Use lastWorkoutSets from the exercise directly — same reactive
+          // query as useExercisesBySchedule, always in sync, no timing issues
+          const lastSets = ex.lastWorkoutSets;
+
+          if (lastSets?.length) {
+            return [
+              ex.id,
+              lastSets.map((s) => ({
+                reps: s.reps ? String(s.reps) : "",
+                weight: s.weight ? String(s.weight) : "",
+                duration: s.duration ? String(s.duration) : "",
+              })),
+            ];
+          }
+
+          // No history — start with empty sets
           return [
             ex.id,
-            suggested?.length
-              ? suggested.map((s) => ({
-                  reps: s.reps,
-                  weight: s.weight,
-                  duration: s.duration,
-                }))
-              : Array.from({ length: ex.numberOfSets || 1 }, emptySet),
+            Array.from({ length: ex.numberOfSets || 1 }, emptySet),
           ];
         }),
       ),
     );
-  }, [exercises.length, suggestions]);
+  }, [exercises.length]);
 
   const tick = () => {
     if (startRef.current !== null) {
@@ -316,7 +323,7 @@ function RouteComponent() {
       ),
     );
     clearSession(scheduleId);
-    skipBlockerRef.current = true; // skip the dialog for this navigation
+    skipBlockerRef.current = true;
     router.history.back();
   };
 
@@ -325,7 +332,7 @@ function RouteComponent() {
     if (workoutIdRef.current)
       saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
     setShowExitDialog(false);
-    proceed?.(); // let navigation go through
+    proceed?.();
   };
 
   const handleDiscard = () => {
@@ -337,7 +344,7 @@ function RouteComponent() {
 
   const handleCancelExit = () => {
     setShowExitDialog(false);
-    reset?.(); // stay on page
+    reset?.();
   };
 
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -407,11 +414,8 @@ function RouteComponent() {
 
             <div className="space-y-2">
               {(exerciseSets[exercise.id] ?? []).map((set, i) => (
-                <>
-                  <div
-                    key={i}
-                    className="flex w-full min-w-0 items-center gap-2"
-                  >
+                <div key={i} className="space-y-1">
+                  <div className="flex w-full min-w-0 items-center gap-2">
                     <p
                       className="w-6 shrink-0 text-center text-xs"
                       style={{ color: S.mutedDark }}
@@ -460,12 +464,13 @@ function RouteComponent() {
                     </button>
                   </div>
 
+                  {/* ✅ Hints come from suggestions, inputs come from lastWorkoutSets */}
                   {!isResuming && suggestions[exercise.id]?.[i]?.hint && (
                     <p className="ml-8 text-xs" style={{ color: S.amber }}>
                       {suggestions[exercise.id][i].hint}
                     </p>
                   )}
-                </>
+                </div>
               ))}
             </div>
 

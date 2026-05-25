@@ -4,7 +4,15 @@ import { useDeleteSchedule, useScheduleById } from "@/hooks/store/schedules";
 import { formatDuration, formatWeight } from "@/utils";
 import { store } from "@/store/schema";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { Play, Plus, Trash, ChevronUp, ChevronDown, Pen } from "lucide-react";
+import {
+  Play,
+  Plus,
+  Trash,
+  ChevronUp,
+  ChevronDown,
+  Pen,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/schedule/$scheduleId/")({
@@ -181,6 +189,20 @@ function RouteComponent() {
                 Start
               </button>
             </Link>
+
+            <button
+              onClick={() => {
+                navigate({
+                  to: "/schedule/$scheduleId/ai",
+                  params: { scheduleId },
+                });
+              }}
+              className="rounded-xl p-2 transition-colors"
+              style={{ background: S.surface, color: S.muted }}
+            >
+              <Sparkles size={16} />
+            </button>
+
             <button
               onClick={() => {
                 navigate({
@@ -193,6 +215,7 @@ function RouteComponent() {
             >
               <Pen size={16} />
             </button>
+
             <button
               onClick={() => {
                 deleteSchedule(scheduleId);

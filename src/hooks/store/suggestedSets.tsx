@@ -79,11 +79,11 @@ export const useAllSuggestedSets = (
             prevSet.weight === set.weight &&
             prevSet.reps === set.reps;
 
-          let hint = "Same as last session";
+          let hint = "";
 
           if (repsHitMax) {
             const increment = set.weight >= 60 ? 5 : 2.5;
-            hint = `↑ Hit rep target — try +${increment}kg next set`;
+            hint = `↑ Hit rep target — try +${increment}kg`;
           } else if (sameWeightBothSessions) {
             const increment = set.weight >= 60 ? 5 : 2.5;
             hint = `↑ Plateau — try +${increment}kg`;
@@ -93,38 +93,28 @@ export const useAllSuggestedSets = (
             hint = "↑ Good progress";
           }
 
-          // ✅ Always prefill with actual last-session values
           return {
-            reps: String(set.reps),
-            weight: String(set.weight),
+            reps: String(set.reps), // ✅ actual last value
+            weight: String(set.weight), // ✅ actual last value
             duration: "",
             hint,
           };
         }
 
         if (exerciseType === "bodyweight") {
-          const sameRepsBothSessions = prevSet && prevSet.reps === set.reps;
-          return {
-            reps: String(set.reps), // ✅ last session value, not +2
-            weight: "",
-            duration: "",
-            hint: sameRepsBothSessions
-              ? "↑ Try adding 2 reps"
-              : "↑ Good progress",
-          };
+          const hint =
+            prevSet && prevSet.reps === set.reps
+              ? "↑ Try +2 reps"
+              : "↑ Good progress";
+          return { reps: String(set.reps), weight: "", duration: "", hint };
         }
 
         if (exerciseType === "duration") {
-          const sameDurationBothSessions =
-            prevSet && prevSet.duration === set.duration;
-          return {
-            reps: "",
-            weight: "",
-            duration: String(set.duration), // ✅ last session value, not +15
-            hint: sameDurationBothSessions
-              ? "↑ Try adding 15 sec"
-              : "↑ Good progress",
-          };
+          const hint =
+            prevSet && prevSet.duration === set.duration
+              ? "↑ Try +15 sec"
+              : "↑ Good progress";
+          return { reps: "", weight: "", duration: String(set.duration), hint };
         }
 
         return { reps: "", weight: "", duration: "", hint: "" };
