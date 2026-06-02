@@ -4,7 +4,7 @@ import React from "react";
 import { toast } from "sonner";
 import { useAddSchedule } from "@/hooks/store/schedules";
 import { ChevronDown } from "lucide-react";
-import { DAYS } from "@/utils";
+import { capitalize, DAYS } from "@/utils";
 
 export const Route = createFileRoute("/schedule/create")({
   component: RouteComponent,
@@ -89,7 +89,7 @@ function RouteComponent() {
                   borderColor: dayOpen ? S.amber : "#262626",
                 }}
               >
-                {scheduleDay || "Select day"}
+                {capitalize(scheduleDay) || "Select day"}
                 <ChevronDown
                   size={15}
                   style={{
@@ -123,7 +123,7 @@ function RouteComponent() {
                           scheduleDay === day ? "#1f1a0f" : "transparent",
                       }}
                     >
-                      {day}
+                      {capitalize(day)}
                     </button>
                   ))}
                 </div>

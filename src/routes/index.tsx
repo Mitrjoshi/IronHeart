@@ -109,7 +109,7 @@ function MacroBar({
 function RouteComponent() {
   const navigate = Route.useNavigate();
   const schedules = useAllSchedules();
-  const todaySchedules = useSchedulesToday();
+  const todaySchedule = useSchedulesToday();
   const workoutHistory = useWorkoutHistory();
   const activeSessions = useActiveSessions();
   const TARGETS = useNutritionTargets();
@@ -271,29 +271,29 @@ function RouteComponent() {
         <div className="space-y-3">
           <SectionLabel label="Today's Workout" />
           <div style={S.card} className="p-4">
-            {todaySchedules.length > 0 ? (
+            {todaySchedule ? (
               <div className="space-y-3">
                 <div>
-                  <p className="font-semibold">{todaySchedules[0]?.name}</p>
-                  {!todaySchedules[0].isDone && (
+                  <p className="font-semibold">{todaySchedule.name}</p>
+                  {!todaySchedule.isDone && (
                     <p
                       className="mt-1 flex items-center gap-1.5 text-xs"
                       style={{ color: S.muted }}
                     >
-                      <span>{todaySchedules[0].exerciseCount} exercises</span>
+                      <span>{todaySchedule.exerciseCount} exercises</span>
                       <span style={{ color: S.mutedDark }}>·</span>
-                      <span>{todaySchedules[0].totalSets} sets</span>
-                      {todaySchedules[0].totalReps > 0 && (
+                      <span>{todaySchedule.totalSets} sets</span>
+                      {todaySchedule.totalReps > 0 && (
                         <>
                           <span style={{ color: S.mutedDark }}>·</span>
-                          <span>{todaySchedules[0].totalReps} reps</span>
+                          <span>{todaySchedule.totalReps} reps</span>
                         </>
                       )}
-                      {todaySchedules[0].totalDuration > 0 && (
+                      {todaySchedule.totalDuration > 0 && (
                         <>
                           <span style={{ color: S.mutedDark }}>·</span>
                           <span>
-                            {formatDuration(todaySchedules[0].totalDuration)}
+                            {formatDuration(todaySchedule.totalDuration)}
                           </span>
                         </>
                       )}
@@ -301,7 +301,7 @@ function RouteComponent() {
                   )}
                 </div>
 
-                {todaySchedules[0].isDone ? (
+                {todaySchedule.isDone ? (
                   <div className="space-y-1 py-4 text-center">
                     <p className="text-4xl">🏆</p>
                     <p className="font-semibold">Crushed it!</p>
@@ -317,7 +317,7 @@ function RouteComponent() {
                     onClick={() =>
                       navigate({
                         to: "/schedule/$scheduleId/start",
-                        params: { scheduleId: todaySchedules[0].id },
+                        params: { scheduleId: todaySchedule.id },
                       })
                     }
                   >
@@ -485,48 +485,65 @@ function RouteComponent() {
         {/* Workout history */}
         <div className="space-y-3">
           <SectionLabel
-            label="Workout History"
+            label={`Workout History ${workoutHistory.length > 0 ? `(${workoutHistory.length})` : ""}`}
             linkLabel="View all"
             onLink={() => navigate({ to: "/history" })}
           />
           {workoutHistory.length > 0 ? (
             <div className="space-y-2">
               {workoutHistory.slice(0, 3).map((workout, i) => (
-                <div key={i} style={S.card} className="space-y-2 px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
-                      {workout.scheduleName}
-                    </p>
-                    <p className="font-mono text-xs" style={{ color: S.amber }}>
-                      {formatDuration(workout.durationSeconds)}
-                    </p>
-                  </div>
-                  <p className="text-xs" style={{ color: S.muted }}>
-                    {workout.exercisesDone.length > 0
-                      ? workout.exercisesDone.map((e) => e.name).join(", ")
-                      : "No exercises recorded"}
-                  </p>
-                  <div
-                    className="flex items-center justify-around pt-1"
-                    style={{ borderTop: "1px solid #1f1f1f" }}
-                  >
-                    {[
-                      { label: "Sets", value: workout.numberOfSets },
-                      { label: "Reps", value: workout.totalReps },
-                      {
-                        label: "Volume",
-                        value: formatVolume(workout.totalVolume),
-                      },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="text-center">
-                        <p className="text-sm font-semibold">{value}</p>
-                        <p className="text-xs" style={{ color: S.muted }}>
-                          {label}
+                <Link
+                  className="block"
+                  to={`/history/$id`}
+                  params={{ id: workout.id }}
+                  key={i}
+                >
+                  <div style={S.card} className="space-y-2 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">
+                        {workout.scheduleName}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <p
+                          className="font-mono text-xs"
+                          style={{ color: S.amber }}
+                        >
+                          {formatDuration(workout.durationSeconds)}
                         </p>
+                        <ChevronRight
+                          size={15}
+                          className="shrink-0"
+                          style={{ color: S.mutedDark }}
+                        />
                       </div>
-                    ))}
+                    </div>
+                    <p className="text-xs" style={{ color: S.muted }}>
+                      {workout.exercisesDone.length > 0
+                        ? workout.exercisesDone.map((e) => e.name).join(", ")
+                        : "No exercises recorded"}
+                    </p>
+                    <div
+                      className="flex items-center justify-around pt-1"
+                      style={{ borderTop: "1px solid #1f1f1f" }}
+                    >
+                      {[
+                        { label: "Sets", value: workout.numberOfSets },
+                        { label: "Reps", value: workout.totalReps },
+                        {
+                          label: "Volume",
+                          value: formatVolume(workout.totalVolume),
+                        },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="text-center">
+                          <p className="text-sm font-semibold">{value}</p>
+                          <p className="text-xs" style={{ color: S.muted }}>
+                            {label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
