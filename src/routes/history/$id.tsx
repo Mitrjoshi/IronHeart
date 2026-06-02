@@ -116,7 +116,7 @@ function RouteComponent() {
                       className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase"
                       style={{ background: S.surface, color: S.muted }}
                     >
-                      {ex.type}
+                      {ex.type || "Weighted"}
                     </span>
                   </div>
 
