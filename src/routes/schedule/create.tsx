@@ -4,20 +4,11 @@ import React from "react";
 import { toast } from "sonner";
 import { useAddSchedule } from "@/hooks/store/schedules";
 import { ChevronDown } from "lucide-react";
+import { DAYS } from "@/utils";
 
 export const Route = createFileRoute("/schedule/create")({
   component: RouteComponent,
 });
-
-const DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 const S = {
   page: { background: "#0e0e0e", color: "#f5f5f5", minHeight: "100vh" },

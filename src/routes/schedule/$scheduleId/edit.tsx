@@ -1,6 +1,6 @@
 import { Header } from "@/components/Header";
 import { useScheduleById, useUpdateSchedule } from "@/hooks/store/schedules";
-import { capitalize } from "@/utils";
+import { capitalize, DAYS } from "@/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import React from "react";
@@ -8,16 +8,6 @@ import React from "react";
 export const Route = createFileRoute("/schedule/$scheduleId/edit")({
   component: RouteComponent,
 });
-
-const DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 
 const S = {
   page: { background: "#0e0e0e", color: "#f5f5f5" },

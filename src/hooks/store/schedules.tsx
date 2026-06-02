@@ -1,4 +1,5 @@
 import { store } from "@/store/schema";
+import { DAYS } from "@/utils";
 import { useRow, useRowIds } from "tinybase/ui-react";
 import { v4 as uuid } from "uuid";
 
@@ -10,10 +11,14 @@ export const useAllSchedules = () => {
   const ids = useRowIds("schedules", store);
   const exerciseIds = useRowIds("exercises", store);
   const setIds = useRowIds("sets", store);
-
   const workoutIds = useRowIds("workouts", store);
 
-  return ids.map((id) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const schedules = ids.map((id) => {
     const scheduleExercises = exerciseIds.filter(
       (exerciseId) =>
         store.getCell("exercises", exerciseId, "scheduleId") === id,
@@ -32,7 +37,6 @@ export const useAllSchedules = () => {
       0,
     );
 
-    // ✅ NEW: get past session duration
     const scheduleWorkouts = workoutIds
       .filter(
         (workoutId) =>
@@ -53,7 +57,9 @@ export const useAllSchedules = () => {
 
     const lastDurationSeconds = scheduleWorkouts[0]?.duration ?? 0;
 
-    // fallback if no history
+    // most recent completion of THIS exact schedule (0 if never finished)
+    const lastFinishedAt = scheduleWorkouts[0]?.finishedAt ?? 0;
+
     const estimatedSeconds =
       totalSets * SET_DURATION_SECONDS +
       totalSets * REST_BETWEEN_SETS_SECONDS +
@@ -68,7 +74,8 @@ export const useAllSchedules = () => {
       day: store.getCell("schedules", id, "day") as string,
       totalSets,
       totalReps,
-      durationSeconds: finalSeconds, // raw seconds instead of minutes
+      durationSeconds: finalSeconds,
+      lastFinishedAt,
       exercises: scheduleExercises
         .map(
           (exerciseId) =>
@@ -77,17 +84,38 @@ export const useAllSchedules = () => {
         .join(", "),
     };
   });
-};
 
-const DAYS = [
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-];
+  // group by day (Sunday → Saturday); mark ONLY ONE schedule per day as done —
+  // the one most recently completed today
+  const todayIndex = new Date().getDay(); // 0 = Sunday … 6 = Saturday
+
+  // group by day (Sunday → Saturday)
+  return DAYS.map((day, dayIndex) => {
+    const daySchedules = schedules.filter((s) => s.day === day);
+
+    // this day already passed this week → next occurrence is next week
+    const isNextWeek = dayIndex < todayIndex;
+
+    // single done schedule for this day (latest finish today)
+    const doneId = daySchedules
+      .filter(
+        (s) =>
+          s.lastFinishedAt >= todayStart.getTime() &&
+          s.lastFinishedAt <= todayEnd.getTime(),
+      )
+      .sort((a, b) => b.lastFinishedAt - a.lastFinishedAt)[0]?.id;
+
+    return {
+      day,
+      isNextWeek,
+      schedules: daySchedules.map((s) => ({
+        ...s,
+        isDone: s.id === doneId,
+        isNextWeek,
+      })),
+    };
+  });
+};
 
 export const useSchedulesToday = () => {
   const today = DAYS[new Date().getDay()];

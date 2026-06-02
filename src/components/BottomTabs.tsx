@@ -1,9 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Apple, Dumbbell, House, Ruler, User2Icon } from "lucide-react";
+import {
+  Apple,
+  // Dumbbell,
+  House,
+  Ruler,
+  User2Icon,
+} from "lucide-react";
 
 const tabs = [
   { to: "/", label: "Home", icon: House },
-  { to: "/schedule", label: "Schedule", icon: Dumbbell },
+  // { to: "/schedule", label: "Schedule", icon: Dumbbell },
   { to: "/food", label: "Food", icon: Apple },
   { to: "/measurements", label: "Measure", icon: Ruler },
   { to: "/profile", label: "Profile", icon: User2Icon },

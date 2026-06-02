@@ -1,16 +1,7 @@
 // hooks/store/useWeeklyStats.ts
 import { store } from "@/store/schema";
+import { DAYS } from "@/utils";
 import { useRowIds } from "tinybase/ui-react";
-
-const DAYS = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
 
 export const useWeeklyStats = () => {
   const workoutIds = useRowIds("workouts", store);

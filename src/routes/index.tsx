@@ -11,7 +11,7 @@ import { WeeklyGraph } from "@/components/WeeklyGraph";
 import { useActiveSessions } from "@/hooks/store/activeSession";
 import { useWorkoutHistory } from "@/hooks/store/workouts";
 import { useDailyTotals, useMealsForDay } from "@/hooks/store/food";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Clock } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { store } from "@/store/schema";
 import { useNutritionTargets } from "@/hooks/store/weight";
@@ -348,41 +348,121 @@ function RouteComponent() {
         <div className="space-y-3">
           <SectionLabel
             label="Workout Schedule"
-            linkLabel="View all"
-            onLink={() => navigate({ to: "/schedule" })}
+            // linkLabel="View all"
+            // onLink={() => navigate({ to: "/schedule" })}
           />
           {schedules.length > 0 ? (
             <div className="flex flex-col gap-1 space-y-2">
-              {schedules.map((split) => (
-                <Link
-                  key={split.id}
-                  to="/schedule/$scheduleId"
-                  params={{ scheduleId: split.id }}
-                >
-                  <div
-                    style={S.card}
-                    className="flex items-start justify-between px-4 py-3"
+              {schedules.some((split) => split.schedules.length > 0) ? (
+                <div className="space-y-5">
+                  {schedules.map((split) => (
+                    <div key={split.day} className="space-y-2">
+                      {/* Day group header */}
+                      <div className="flex items-center gap-3">
+                        <p
+                          className="text-xs font-semibold tracking-widest uppercase"
+                          style={{ color: S.muted }}
+                        >
+                          {capitalize(split.day)}
+                        </p>
+                        <div
+                          className="h-px flex-1"
+                          style={{ background: S.surface }}
+                        />
+                      </div>
+
+                      {split.schedules.length > 0 ? (
+                        <div className="space-y-2">
+                          {split.schedules.map((schedule) => (
+                            <Link
+                              key={schedule.id}
+                              to="/schedule/$scheduleId"
+                              params={{ scheduleId: schedule.id }}
+                              className="block"
+                            >
+                              <div
+                                style={S.card}
+                                className="flex items-start justify-between px-4 py-3"
+                              >
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <p className="truncate text-sm font-medium">
+                                      {schedule.name}
+                                    </p>
+
+                                    {schedule.isDone ? (
+                                      <span
+                                        className="flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                                        style={{
+                                          background: "rgba(245,158,11,0.12)",
+                                          color: S.amber,
+                                        }}
+                                      >
+                                        <Check size={10} strokeWidth={3} />
+                                        DONE
+                                      </span>
+                                    ) : schedule.isNextWeek ? (
+                                      <span
+                                        className="flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                                        style={{
+                                          background: S.surface,
+                                          color: S.muted,
+                                        }}
+                                      >
+                                        <Clock size={10} strokeWidth={2.5} />
+                                        NEXT WEEK
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <p
+                                    className="mt-0.5 truncate text-xs"
+                                    style={{ color: S.muted }}
+                                  >
+                                    {schedule.exercises || "No exercises yet"}
+                                  </p>
+                                </div>
+                                <div className="ml-3 flex shrink-0 items-center gap-2">
+                                  <p
+                                    className="font-mono text-xs"
+                                    style={{ color: S.amber }}
+                                  >
+                                    {schedule.durationSeconds !== 0 &&
+                                      formatDuration(schedule.durationSeconds)}
+                                  </p>
+                                  <ChevronRight
+                                    size={15}
+                                    style={{ color: S.mutedDark }}
+                                  />
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p
+                          className="px-1 text-xs"
+                          style={{ color: S.mutedDark }}
+                        >
+                          Rest day
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={S.card} className="space-y-3 p-4 text-center">
+                  <p className="text-sm" style={{ color: S.muted }}>
+                    No schedules yet.
+                  </p>
+                  <button
+                    className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                    style={{ background: S.surface, color: "#f5f5f5" }}
+                    onClick={() => navigate({ to: "/schedule/create" })}
                   >
-                    <div>
-                      <p className="text-sm font-medium">
-                        {capitalize(split.day)} — {split.name}
-                      </p>
-                      <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
-                        {split.exercises}
-                      </p>
-                    </div>
-                    <div className="ml-3 flex shrink-0 items-center gap-2">
-                      <p
-                        className="font-mono text-xs"
-                        style={{ color: S.amber }}
-                      >
-                        {formatDuration(split.durationSeconds)}
-                      </p>
-                      <ChevronRight size={15} style={{ color: S.mutedDark }} />
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                    Create Schedule
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div style={S.card} className="space-y-3 p-4 text-center">
