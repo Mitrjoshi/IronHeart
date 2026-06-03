@@ -3,10 +3,6 @@ import { DAYS } from "@/utils";
 import { useRow, useRowIds } from "tinybase/ui-react";
 import { v4 as uuid } from "uuid";
 
-const SET_DURATION_SECONDS = 45;
-const REST_BETWEEN_SETS_SECONDS = 60;
-const REST_BETWEEN_EXERCISES_SECONDS = 90;
-
 export const useAllSchedules = () => {
   const ids = useRowIds("schedules", store);
   const exerciseIds = useRowIds("exercises", store);
@@ -60,13 +56,7 @@ export const useAllSchedules = () => {
     // most recent completion of THIS exact schedule (0 if never finished)
     const lastFinishedAt = scheduleWorkouts[0]?.finishedAt ?? 0;
 
-    const estimatedSeconds =
-      totalSets * SET_DURATION_SECONDS +
-      totalSets * REST_BETWEEN_SETS_SECONDS +
-      scheduleExercises.length * REST_BETWEEN_EXERCISES_SECONDS;
-
-    const finalSeconds =
-      lastDurationSeconds > 0 ? lastDurationSeconds : estimatedSeconds;
+    const finalSeconds = lastDurationSeconds;
 
     return {
       id,
