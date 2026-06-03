@@ -16,7 +16,7 @@ import {
   useDeleteWeight,
 } from "@/hooks/store/weight";
 import { useSettings, useUpdateSettings } from "@/hooks/store/settings";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   CartesianGrid,
@@ -27,7 +27,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Settings, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/profile/")({
   component: RouteComponent,
@@ -215,7 +215,20 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header title="Profile" subtitle="Track your weight over time" />
+      <Header
+        right={
+          <Link to="/profile/settings">
+            <button
+              className="rounded-xl p-2 transition-colors"
+              style={{ background: S.surface, color: S.muted }}
+            >
+              <Settings size={14} />
+            </button>
+          </Link>
+        }
+        title="Profile"
+        subtitle="Track your weight over time"
+      />
 
       <div style={S.page} className="min-h-screen space-y-3 px-4 pt-20 pb-8">
         {/* Profile settings */}

@@ -18,6 +18,7 @@ import { Route as MeasurementsIndexRouteImport } from './routes/measurements/ind
 import { Route as HistoryIndexRouteImport } from './routes/history/index'
 import { Route as FoodIndexRouteImport } from './routes/food/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
+import { Route as ProfileSettingsRouteImport } from './routes/profile/settings'
 import { Route as HistoryIdRouteImport } from './routes/history/$id'
 import { Route as FoodLoggedRouteImport } from './routes/food/logged'
 import { Route as FoodAddRouteImport } from './routes/food/add'
@@ -72,6 +73,11 @@ const FoodIndexRoute = FoodIndexRouteImport.update({
 const ScheduleCreateRoute = ScheduleCreateRouteImport.update({
   id: '/schedule/create',
   path: '/schedule/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileSettingsRoute = ProfileSettingsRouteImport.update({
+  id: '/profile/settings',
+  path: '/profile/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryIdRoute = HistoryIdRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
   '/history/': typeof HistoryIndexRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food': typeof FoodIndexRoute
   '/history': typeof HistoryIndexRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
   '/history/': typeof HistoryIndexRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/profile/settings'
     | '/schedule/create'
     | '/food/'
     | '/history/'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/profile/settings'
     | '/schedule/create'
     | '/food'
     | '/history'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/profile/settings'
     | '/schedule/create'
     | '/food/'
     | '/history/'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   FoodAddRoute: typeof FoodAddRoute
   FoodLoggedRoute: typeof FoodLoggedRoute
   HistoryIdRoute: typeof HistoryIdRoute
+  ProfileSettingsRoute: typeof ProfileSettingsRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   FoodIndexRoute: typeof FoodIndexRoute
   HistoryIndexRoute: typeof HistoryIndexRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScheduleCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/settings': {
+      id: '/profile/settings'
+      path: '/profile/settings'
+      fullPath: '/profile/settings'
+      preLoaderRoute: typeof ProfileSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history/$id': {
       id: '/history/$id'
       path: '/history/$id'
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   FoodAddRoute: FoodAddRoute,
   FoodLoggedRoute: FoodLoggedRoute,
   HistoryIdRoute: HistoryIdRoute,
+  ProfileSettingsRoute: ProfileSettingsRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   FoodIndexRoute: FoodIndexRoute,
   HistoryIndexRoute: HistoryIndexRoute,
