@@ -3,17 +3,28 @@ import { store } from "@/store/schema";
 import { DAYS } from "@/utils";
 import { useRowIds } from "tinybase/ui-react";
 
+const DAY_TO_JS_INDEX: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+};
+
 export const useWeeklyStats = () => {
   const workoutIds = useRowIds("workouts", store);
   const workoutSetIds = useRowIds("workoutSets", store);
   const scheduleIds = useRowIds("schedules", store);
 
   const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+  const startJsDay = DAY_TO_JS_INDEX[DAYS[0]];
   const weekStart = new Date(now);
   weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(now.getDate() + diffToMonday);
+  // days back to the first day of the week, per DAYS ordering
+  const backToStart = (now.getDay() - startJsDay + 7) % 7;
+  weekStart.setDate(now.getDate() - backToStart);
 
   return DAYS.map((day) => {
     const dayIndex = DAYS.indexOf(day);
