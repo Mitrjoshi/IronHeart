@@ -89,14 +89,14 @@ export function DaySelector({ selectedDate, onChange }: DaySelectorProps) {
               </span>
 
               {/* Month — only shown when it's the 1st or the selected day */}
-              {(day.getDate() === 1 || isSelected) && (
-                <span className="mt-0.5 text-[9px] tracking-wide uppercase opacity-60">
-                  {day.toLocaleDateString("en-US", { month: "short" })}
-                </span>
-              )}
+              {/* {(day.getDate() === 1 || isSelected) && ( */}
+              <span className="mt-0.5 text-[9px] tracking-wide uppercase opacity-60">
+                {day.toLocaleDateString("en-US", { month: "short" })}
+              </span>
+              {/* )} */}
 
               {/* Today dot */}
-              {isToday && !isSelected && (
+              {isToday && (
                 <span className="bg-foreground/40 mt-1 block h-1 w-1 rounded-full" />
               )}
             </button>
