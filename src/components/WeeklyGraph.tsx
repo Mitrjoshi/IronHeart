@@ -87,7 +87,29 @@ export const WeeklyGraph = () => {
             tick={{ fontSize: 11, fill: S.mutedDark }}
             tickFormatter={(v) => `${(v / 1000).toFixed(0)}t`}
           />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(value, payload) => {
+                  const scheduleName = payload?.[0]?.payload?.scheduleName as
+                    | string
+                    | null;
+                  return (
+                    <span>
+                      {capitalize(value as string)}
+                      {scheduleName ? (
+                        <span style={{ color: S.muted }}>
+                          {" "}
+                          · {scheduleName}
+                        </span>
+                      ) : null}
+                    </span>
+                  );
+                }}
+              />
+            }
+          />
           <Bar yAxisId="reps" dataKey="totalReps" fill={S.amber} radius={8} />
           <Bar
             yAxisId="volume"
