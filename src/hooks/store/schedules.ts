@@ -246,14 +246,15 @@ export const useSchedulesToday = () => {
         isDone: boolean;
       }[],
     )
-    // next-to-do first: not-yet-done before done, then by creation order
-    .sort(
-      (a, b) =>
-        Number(a.isDone) - Number(b.isDone) || a.createdAt - b.createdAt,
-    );
+    // earliest-created first
+    .sort((a, b) => a.createdAt - b.createdAt);
 
-  // the single schedule to do today (null if it's a rest day)
-  return todays[0] ?? null;
+  // the single pending schedule to do today (null if all done / rest day)
+  console.log({
+    today,
+    storedDays: ids.map((id) => store.getCell("schedules", id, "day")),
+  });
+  return todays.find((s) => !s.isDone) ?? null;
 };
 
 export const useScheduleById = (id: string) => {
@@ -316,7 +317,71 @@ export const useSchedulesByDay = (day: string) => {
 
 export const useDeleteSchedule = () => {
   return (id: string) => {
-    store.delRow("schedules", id);
+    store.transaction(() => {
+      // exercises belonging to this schedule
+      const exerciseIds = store
+        .getRowIds("exercises")
+        .filter(
+          (exerciseId) =>
+            store.getCell("exercises", exerciseId, "scheduleId") === id,
+        );
+
+      // workouts belonging to this schedule
+      const workoutIds = store
+        .getRowIds("workouts")
+        .filter(
+          (workoutId) =>
+            store.getCell("workouts", workoutId, "scheduleId") === id,
+        );
+
+      // sets under those exercises
+      store
+        .getRowIds("sets")
+        .filter((setId) =>
+          exerciseIds.includes(
+            store.getCell("sets", setId, "exerciseId") as string,
+          ),
+        )
+        .forEach((setId) => store.delRow("sets", setId));
+
+      // workoutSets under those workouts or exercises (avoids orphans)
+      store
+        .getRowIds("workoutSets")
+        .filter((workoutSetId) => {
+          const workoutId = store.getCell(
+            "workoutSets",
+            workoutSetId,
+            "workoutId",
+          ) as string;
+          const exerciseId = store.getCell(
+            "workoutSets",
+            workoutSetId,
+            "exerciseId",
+          ) as string;
+          return (
+            workoutIds.includes(workoutId) || exerciseIds.includes(exerciseId)
+          );
+        })
+        .forEach((workoutSetId) => store.delRow("workoutSets", workoutSetId));
+
+      // active sessions for this schedule
+      store
+        .getRowIds("activeSessions")
+        .filter(
+          (sessionId) =>
+            store.getCell("activeSessions", sessionId, "scheduleId") === id,
+        )
+        .forEach((sessionId) => store.delRow("activeSessions", sessionId));
+
+      // the exercises and workouts themselves
+      exerciseIds.forEach((exerciseId) =>
+        store.delRow("exercises", exerciseId),
+      );
+      workoutIds.forEach((workoutId) => store.delRow("workouts", workoutId));
+
+      // finally, the schedule
+      store.delRow("schedules", id);
+    });
   };
 };
 

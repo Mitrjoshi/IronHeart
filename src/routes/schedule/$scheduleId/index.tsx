@@ -12,8 +12,15 @@ import {
   ChevronDown,
   Pen,
   Sparkles,
+  EllipsisVertical,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/schedule/$scheduleId/")({
   component: RouteComponent,
@@ -138,6 +145,8 @@ function RouteComponent() {
   const [animating, setAnimating] = useState<
     { id: string; direction: "up" | "down" }[]
   >([]);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -190,42 +199,82 @@ function RouteComponent() {
               </button>
             </Link>
 
-            <button
-              onClick={() => {
-                navigate({
-                  to: "/schedule/$scheduleId/ai",
-                  params: { scheduleId },
-                });
-              }}
-              className="rounded-xl p-2 transition-colors"
-              style={{ background: S.surface, color: S.muted }}
-            >
-              <Sparkles size={16} />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="rounded-xl p-2 transition-colors"
+                style={{ background: S.surface, color: S.muted }}
+              >
+                <EllipsisVertical size={16} />
+              </DropdownMenuTrigger>
 
-            <button
-              onClick={() => {
-                navigate({
-                  to: "/schedule/$scheduleId/edit",
-                  params: { scheduleId },
-                });
-              }}
-              className="rounded-xl p-2 transition-colors"
-              style={{ background: S.surface, color: S.muted }}
-            >
-              <Pen size={16} />
-            </button>
+              <DropdownMenuContent
+                side="bottom"
+                align="end"
+                className="mt-2 w-auto space-y-1"
+              >
+                <DropdownMenuItem asChild className="gap-4 px-4 py-2">
+                  <button
+                    onClick={() =>
+                      navigate({
+                        to: "/schedule/$scheduleId/ai",
+                        params: { scheduleId },
+                      })
+                    }
+                    className="flex w-full items-center gap-0 transition-colors"
+                    style={{ background: S.surface }}
+                  >
+                    <Sparkles size={16} />
+                    <span className="text-sm text-nowrap">
+                      Generate with AI
+                    </span>
+                  </button>
+                </DropdownMenuItem>
 
-            <button
-              onClick={() => {
+                <DropdownMenuItem asChild className="gap-4 px-4 py-2">
+                  <button
+                    onClick={() =>
+                      navigate({
+                        to: "/schedule/$scheduleId/edit",
+                        params: { scheduleId },
+                      })
+                    }
+                    className="flex w-full items-center gap-0 transition-colors"
+                    style={{ background: S.surface }}
+                  >
+                    <Pen size={16} />
+                    <span className="text-sm text-nowrap">Edit Schedule</span>
+                  </button>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setDeleteOpen(true);
+                  }}
+                  asChild
+                  className="gap-4 px-4 py-2"
+                >
+                  <button
+                    className="flex w-full items-center gap-0 transition-colors"
+                    style={{ background: S.surface, color: S.red }}
+                  >
+                    <Trash size={16} />
+                    <span className="text-sm text-nowrap">Delete Schedule</span>
+                  </button>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* lives outside the dropdown, controlled by state */}
+            <ExitDialog
+              open={deleteOpen}
+              onCancel={() => {
+                setDeleteOpen(false);
+              }}
+              onDelete={() => {
                 deleteSchedule(scheduleId);
                 router.history.back();
               }}
-              className="rounded-xl p-2 transition-colors"
-              style={{ background: S.redSurface, color: S.red }}
-            >
-              <Trash size={16} />
-            </button>
+            />
           </div>
         }
       />
@@ -272,11 +321,59 @@ function RouteComponent() {
             params: { scheduleId },
           })
         }
-        className="fixed right-4 bottom-4 z-10 flex size-14 items-center justify-center rounded-full shadow-2xl transition-opacity active:opacity-80"
+        className="fixed right-4 bottom-4 z-1 flex size-14 items-center justify-center rounded-full shadow-2xl transition-opacity active:opacity-80"
         style={{ background: S.amber }}
       >
         <Plus size={24} color="#0e0e0e" />
       </button>
+    </div>
+  );
+}
+
+function ExitDialog({
+  open,
+  onDelete,
+  onCancel,
+}: {
+  open: boolean;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-100 flex items-end justify-center p-4">
+      <div
+        className="absolute inset-0"
+        style={{ background: "rgba(0,0,0,0.7)" }}
+        onClick={onCancel}
+      />
+      <div
+        className="relative z-10 w-full space-y-3 p-5"
+        style={{ ...S.card, borderRadius: 20 }}
+      >
+        <p className="text-base font-semibold">Delete Schedule?</p>
+        <p className="text-sm" style={{ color: S.muted }}>
+          This action can't be undone.
+        </p>
+        <div className="space-y-2 pt-1">
+          <button
+            onClick={onDelete}
+            className="w-full rounded-xl py-2.5 text-sm font-semibold"
+            style={{ background: S.surface, color: S.red }}
+          >
+            Delete
+          </button>
+
+          <button
+            onClick={onCancel}
+            className="w-full rounded-xl py-2.5 text-sm"
+            style={{ color: S.muted }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

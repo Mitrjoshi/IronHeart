@@ -348,8 +348,8 @@ function RouteComponent() {
         <div className="space-y-3">
           <SectionLabel
             label="Workout Schedule"
-            // linkLabel="View all"
-            // onLink={() => navigate({ to: "/schedule" })}
+            linkLabel="View all"
+            onLink={() => navigate({ to: "/schedule" })}
           />
           {schedules.length > 0 ? (
             <div className="flex flex-col gap-1 space-y-2">
@@ -410,7 +410,7 @@ function RouteComponent() {
                                         }}
                                       >
                                         <Clock size={10} strokeWidth={2.5} />
-                                        NEXT WEEK
+                                        PENDING
                                       </span>
                                     ) : null}
                                   </div>
