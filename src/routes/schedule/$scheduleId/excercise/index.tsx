@@ -4,7 +4,7 @@ import { useAddExercise } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
 import { capitalize } from "@/utils";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Search } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
@@ -62,14 +62,25 @@ function RouteComponent() {
   const addExercise = useAddExercise();
   const router = useRouter();
 
-  const [muscleGroup, setMuscleGroup] =
-    React.useState<keyof typeof Exercises>("chest");
+  const [muscleGroup, setMuscleGroup] = React.useState<
+    keyof typeof Exercises | "all"
+  >("chest");
+  const [search, setSearch] = React.useState("");
   const [exerciseName, setExerciseName] = React.useState("");
   const [exerciseType, setExerciseType] =
     React.useState<ExerciseType>("weighted");
   const [sets, setSets] = React.useState<Set[]>([
     { reps: "", weight: "", duration: "" },
   ]);
+
+  const filteredExercises = React.useMemo(() => {
+    const base =
+      muscleGroup === "all"
+        ? Object.values(Exercises).flat()
+        : Exercises[muscleGroup];
+    const q = search.trim().toLowerCase();
+    return q ? base.filter((e) => e.name.toLowerCase().includes(q)) : base;
+  }, [muscleGroup, search]);
 
   const updateSet = (i: number, field: keyof Set, value: string) =>
     setSets((prev) =>
@@ -223,12 +234,30 @@ function RouteComponent() {
           Exercise Library
         </p>
 
+        {/* Search */}
+        <div className="relative">
+          <Search
+            size={16}
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
+            style={{ color: S.muted }}
+          />
+          <input
+            placeholder="Search exercises"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full py-2.5 pr-3 pl-9 text-sm transition-colors outline-none placeholder:text-[#404040] focus:border-amber-500"
+            style={S.input}
+          />
+        </div>
+
         {/* Muscle group pills */}
         <div className="flex flex-wrap gap-2">
-          {Object.keys(Exercises).map((group) => (
+          {["all", ...Object.keys(Exercises)].map((group) => (
             <button
               key={group}
-              onClick={() => setMuscleGroup(group as keyof typeof Exercises)}
+              onClick={() =>
+                setMuscleGroup(group as keyof typeof Exercises | "all")
+              }
               className="rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors"
               style={
                 muscleGroup === group
@@ -247,33 +276,39 @@ function RouteComponent() {
 
         {/* Exercise list */}
         <div className="space-y-2">
-          {Exercises[muscleGroup].map((exercise) => (
-            <div
-              key={exercise.name}
-              style={S.card}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <div>
-                <p className="text-sm font-medium">{exercise.name}</p>
-                <p
-                  className="mt-0.5 text-xs capitalize"
-                  style={{ color: S.muted }}
-                >
-                  {exercise.type}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setExerciseName(exercise.name);
-                  setExerciseType(exercise.type as ExerciseType);
-                }}
-                className="rounded-xl p-2 transition-colors"
-                style={{ background: S.surface, color: S.amber }}
+          {filteredExercises.length === 0 ? (
+            <p className="py-6 text-center text-sm" style={{ color: S.muted }}>
+              No exercises found
+            </p>
+          ) : (
+            filteredExercises.map((exercise, i) => (
+              <div
+                key={`${exercise.name}-${i}`}
+                style={S.card}
+                className="flex items-center justify-between px-4 py-3"
               >
-                <Plus size={16} />
-              </button>
-            </div>
-          ))}
+                <div>
+                  <p className="text-sm font-medium">{exercise.name}</p>
+                  <p
+                    className="mt-0.5 text-xs capitalize"
+                    style={{ color: S.muted }}
+                  >
+                    {exercise.type}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setExerciseName(exercise.name);
+                    setExerciseType(exercise.type as ExerciseType);
+                  }}
+                  className="rounded-xl p-2 transition-colors"
+                  style={{ background: S.surface, color: S.amber }}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
