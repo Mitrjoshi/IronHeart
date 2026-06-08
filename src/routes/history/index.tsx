@@ -37,56 +37,77 @@ function RouteComponent() {
       <div className="space-y-4 p-4 py-0 pt-20 pb-4">
         <WorkoutHeatmap />
 
+        <hr style={S.divider} />
+
         <div className="space-y-2">
-          {workoutHistory.map((workout, i) => (
-            <Link
-              className="block"
-              to={`/history/$id`}
-              params={{ id: workout.id }}
-              key={i}
-            >
-              <div style={S.card} className="space-y-2 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">{workout.scheduleName}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-mono text-xs" style={{ color: S.amber }}>
-                      {formatDuration(workout.durationSeconds)}
+          {workoutHistory && workoutHistory.length > 0 ? (
+            workoutHistory.map((workout, i) => (
+              <Link
+                className="block"
+                to={`/history/$id`}
+                params={{ id: workout.id }}
+                key={i}
+              >
+                <div style={S.card} className="space-y-2 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">
+                      {workout.scheduleName}
                     </p>
-                    <ChevronRight
-                      size={15}
-                      className="shrink-0"
-                      style={{ color: S.mutedDark }}
-                    />
+                    <div className="flex items-center gap-2">
+                      <p
+                        className="font-mono text-xs"
+                        style={{ color: S.amber }}
+                      >
+                        {formatDuration(workout.durationSeconds)}
+                      </p>
+                      <ChevronRight
+                        size={15}
+                        className="shrink-0"
+                        style={{ color: S.mutedDark }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs" style={{ color: S.muted }}>
+                    {workout.exercisesDone.length > 0
+                      ? workout.exercisesDone.map((e) => e.name).join(", ")
+                      : "No exercises recorded"}
+                  </p>
+                  <div
+                    className="flex items-center justify-around pt-1"
+                    style={{ borderTop: "1px solid #1f1f1f" }}
+                  >
+                    {[
+                      { label: "Sets", value: workout.numberOfSets },
+                      { label: "Reps", value: workout.totalReps },
+                      {
+                        label: "Volume",
+                        value: formatVolume(workout.totalVolume),
+                      },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="text-center">
+                        <p className="text-sm font-semibold">{value}</p>
+                        <p className="text-xs" style={{ color: S.muted }}>
+                          {label}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <p className="text-xs" style={{ color: S.muted }}>
-                  {workout.exercisesDone.length > 0
-                    ? workout.exercisesDone.map((e) => e.name).join(", ")
-                    : "No exercises recorded"}
-                </p>
-                <div
-                  className="flex items-center justify-around pt-1"
-                  style={{ borderTop: "1px solid #1f1f1f" }}
-                >
-                  {[
-                    { label: "Sets", value: workout.numberOfSets },
-                    { label: "Reps", value: workout.totalReps },
-                    {
-                      label: "Volume",
-                      value: formatVolume(workout.totalVolume),
-                    },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="text-center">
-                      <p className="text-sm font-semibold">{value}</p>
-                      <p className="text-xs" style={{ color: S.muted }}>
-                        {label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          ) : (
+            <div
+              style={S.card}
+              className="flex flex-col items-center justify-center space-y-2 py-16 text-center"
+            >
+              <p className="text-sm" style={{ color: S.muted }}>
+                No workouts yet.
+              </p>
+              <p className="text-xs" style={{ color: S.mutedDark }}>
+                Tap + to create your first workout.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </>
