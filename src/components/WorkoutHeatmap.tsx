@@ -5,6 +5,7 @@ import { store } from "@/store/schema";
 import { useRowIds } from "tinybase/ui-react";
 import { DAYS } from "@/utils";
 import { Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 
 const WEEKS = 13;
 const DAY_MS = 86_400_000;
@@ -358,15 +359,6 @@ export function WorkoutHeatmap() {
                   day: "numeric",
                 })}
               </p>
-
-              <p
-                className="mt-1 text-sm"
-                style={{
-                  color: S.colors.muted,
-                }}
-              >
-                {STATUS_LABEL[selectedCell.status]}
-              </p>
             </div>
 
             {selectedCell.workout ? (
@@ -422,14 +414,14 @@ export function WorkoutHeatmap() {
                     }}
                   >
                     <button
-                      className="mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold"
+                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
                       style={{
-                        background: S.colors.white,
+                        background: S.colors.amber,
 
                         color: S.colors.black,
                       }}
                     >
-                      More Info
+                      More Info <ChevronRight size={16} />
                     </button>
                   </Link>
                 )}
