@@ -89,7 +89,8 @@ function RouteComponent() {
                             className="font-mono text-xs"
                             style={{ color: S.amber }}
                           >
-                            {formatDuration(schedule.durationSeconds)}
+                            {schedule.durationSeconds !== 0 &&
+                              formatDuration(schedule.durationSeconds)}
                           </p>
                           <ChevronRight
                             size={16}
