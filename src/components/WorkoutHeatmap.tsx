@@ -67,13 +67,6 @@ type CellData = {
   };
 };
 
-const STATUS_LABEL: Record<Status, string> = {
-  done: "Done",
-  skipped: "Skipped",
-  rest: "Rest day",
-  future: "Upcoming",
-};
-
 const startOfDay = (ts: number) => {
   const d = new Date(ts);
 
