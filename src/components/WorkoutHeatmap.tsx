@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { store } from "@/store/schema";
 import { useRowIds } from "tinybase/ui-react";
 import { DAYS } from "@/utils";
+import { Link } from "@tanstack/react-router";
 
 const WEEKS = 13;
 const DAY_MS = 86_400_000;
@@ -273,7 +274,7 @@ export function WorkoutHeatmap() {
               borderColor: C.border,
             }}
           >
-            <div className="mb-4">
+            <div className="mb-5">
               <p className="text-lg font-semibold">
                 {new Date(selectedCell.ts).toLocaleDateString(undefined, {
                   weekday: "long",
@@ -287,85 +288,75 @@ export function WorkoutHeatmap() {
               </p>
             </div>
 
-            {/* schedules */}
-            <div className="space-y-2">
-              <p
-                className="text-xs tracking-wide uppercase"
-                style={{ color: C.muted }}
-              >
-                Scheduled Workouts
-              </p>
-
-              {selectedCell.schedules.length > 0 ? (
-                selectedCell.schedules.map((s) => (
-                  <div
-                    key={s.id}
-                    className="rounded-2xl border p-3"
-                    style={{
-                      borderColor: C.border,
-                      background: C.bg,
-                    }}
-                  >
-                    <p className="text-sm font-medium">{s.name}</p>
-
-                    <p
-                      className="mt-1 text-xs capitalize"
-                      style={{ color: C.muted }}
-                    >
-                      {s.day}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm" style={{ color: C.muted }}>
-                  No schedules
-                </p>
-              )}
-            </div>
-
-            {/* workout */}
-            {selectedCell.workout && (
-              <div className="mt-4">
-                <p
-                  className="mb-2 text-xs tracking-wide uppercase"
-                  style={{ color: C.muted }}
-                >
-                  Workout
-                </p>
-
+            {selectedCell.workout ? (
+              <>
                 <div
-                  className="rounded-2xl border p-3"
+                  className="rounded-2xl border p-4"
                   style={{
                     borderColor: C.border,
                     background: C.bg,
                   }}
                 >
-                  <p className="text-sm font-medium">Workout completed</p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">Workout Completed</p>
 
-                  <p className="mt-1 text-xs" style={{ color: C.muted }}>
-                    {new Date(
-                      selectedCell.workout.finishedAt,
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                      <p className="mt-1 text-xs" style={{ color: C.muted }}>
+                        Finished at{" "}
+                        {new Date(
+                          selectedCell.workout.finishedAt,
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+
+                    <div
+                      className="rounded-full px-2 py-1 text-[10px] font-semibold"
+                      style={{
+                        background: "rgba(34,197,94,0.15)",
+                        color: C.done,
+                      }}
+                    >
+                      DONE
+                    </div>
+                  </div>
                 </div>
+
+                <Link
+                  to="/history/$id"
+                  params={{ id: selectedCell.workout.id }}
+                >
+                  <button
+                    className="mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold"
+                    style={{
+                      background: "#ffffff",
+                      color: "#000000",
+                    }}
+                    onClick={() => {
+                      console.log("More info:", selectedCell);
+                    }}
+                  >
+                    More Info
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <div
+                className="rounded-2xl border p-5 text-center"
+                style={{
+                  borderColor: C.border,
+                  background: C.bg,
+                }}
+              >
+                <p className="text-sm font-medium">No workout completed</p>
+
+                <p className="mt-1 text-xs" style={{ color: C.muted }}>
+                  Nothing was logged for this day.
+                </p>
               </div>
             )}
-
-            <button
-              className="mt-5 w-full rounded-2xl px-4 py-3 text-sm font-semibold"
-              style={{
-                background: "#ffffff",
-                color: "#000000",
-              }}
-              onClick={() => {
-                console.log("More info:", selectedCell);
-              }}
-            >
-              More Info
-            </button>
           </div>
         </div>
       )}
