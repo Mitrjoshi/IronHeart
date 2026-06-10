@@ -3,16 +3,22 @@ import { DAYS } from "@/utils";
 import { useRow, useRowIds } from "tinybase/ui-react";
 import { v4 as uuid } from "uuid";
 
+// Start of the current week (Sunday 00:00 — DAYS is Sunday-indexed).
+// Change to Monday-start by using `((day + 6) % 7)` instead of `day` below.
+const getWeekStartMs = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d.getTime();
+};
+
 export const useAllSchedules = () => {
   const ids = useRowIds("schedules", store);
   const exerciseIds = useRowIds("exercises", store);
   const setIds = useRowIds("sets", store);
   const workoutIds = useRowIds("workouts", store);
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const weekStartMs = getWeekStartMs();
 
   const schedules = ids.map((id) => {
     const scheduleExercises = exerciseIds.filter(
@@ -75,8 +81,6 @@ export const useAllSchedules = () => {
     };
   });
 
-  // group by day (Sunday → Saturday); mark ONLY ONE schedule per day as done —
-  // the one most recently completed today
   const todayIndex = new Date().getDay(); // 0 = Sunday … 6 = Saturday
 
   // group by day (Sunday → Saturday)
@@ -86,14 +90,19 @@ export const useAllSchedules = () => {
     // this day already passed this week → next occurrence is next week
     const isNextWeek = dayIndex < todayIndex;
 
-    // single done schedule for this day (latest finish today)
-    const doneId = daySchedules
-      .filter(
-        (s) =>
-          s.lastFinishedAt >= todayStart.getTime() &&
-          s.lastFinishedAt <= todayEnd.getTime(),
-      )
-      .sort((a, b) => b.lastFinishedAt - a.lastFinishedAt)[0]?.id;
+    // Which schedule is "done" for this day?
+    let doneId: string | undefined;
+    if (daySchedules.length > 1) {
+      // Multiple schedules → rotation: the most recently completed one stays
+      // "done" (carrying across the week) until a *different* one is completed.
+      // Everything else is pending / up next.
+      doneId = daySchedules
+        .filter((s) => s.lastFinishedAt > 0)
+        .sort((a, b) => b.lastFinishedAt - a.lastFinishedAt)[0]?.id;
+    } else {
+      // Single schedule → "done" only for the current week, then resets.
+      doneId = daySchedules.find((s) => s.lastFinishedAt >= weekStartMs)?.id;
+    }
 
     return {
       day,
@@ -114,10 +123,7 @@ export const useSchedulesToday = () => {
   const workoutIds = useRowIds("workouts", store);
   const setIds = useRowIds("sets", store);
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const weekStartMs = getWeekStartMs();
 
   const todays = ids
     .reduce(
@@ -187,24 +193,24 @@ export const useSchedulesToday = () => {
             0,
           );
 
-          const isDone = workoutIds.some((workoutId) => {
-            const finishedAt = store.getCell(
-              "workouts",
-              workoutId,
-              "finishedAt",
-            ) as number;
-            const scheduleId = store.getCell(
-              "workouts",
-              workoutId,
-              "scheduleId",
-            ) as string;
-
-            return (
-              scheduleId === id &&
-              finishedAt >= todayStart.getTime() &&
-              finishedAt <= todayEnd.getTime()
+          // most recent completion of THIS schedule (0 if never finished)
+          const lastFinishedAt = workoutIds
+            .filter(
+              (workoutId) =>
+                store.getCell("workouts", workoutId, "scheduleId") === id &&
+                (store.getCell("workouts", workoutId, "finishedAt") as number) >
+                  0,
+            )
+            .reduce(
+              (max, workoutId) =>
+                Math.max(
+                  max,
+                  store.getCell("workouts", workoutId, "finishedAt") as number,
+                ),
+              0,
             );
-          });
+
+          const isDone = lastFinishedAt >= weekStartMs;
 
           acc.push({
             id,
@@ -217,6 +223,7 @@ export const useSchedulesToday = () => {
             totalSets,
             totalReps,
             totalDuration,
+            lastFinishedAt,
             isDone,
           });
         }
@@ -233,18 +240,25 @@ export const useSchedulesToday = () => {
         totalSets: number;
         totalReps: number;
         totalDuration: number;
+        lastFinishedAt: number;
         isDone: boolean;
       }[],
     )
     // earliest-created first
     .sort((a, b) => a.createdAt - b.createdAt);
 
-  // the single pending schedule to do today (null if all done / rest day)
-  console.log({
-    today,
-    storedDays: ids.map((id) => store.getCell("schedules", id, "day")),
-  });
-  return todays.find((s) => !s.isDone) ?? null;
+  // If any of today's schedules was already completed this week, the day is
+  // satisfied → nothing pending.
+  if (todays.some((s) => s.lastFinishedAt >= weekStartMs)) return null;
+
+  // Otherwise the rotation pick: the one completed least recently (0 = never),
+  // tie-broken by creation order.
+  return (
+    [...todays].sort(
+      (a, b) =>
+        a.lastFinishedAt - b.lastFinishedAt || a.createdAt - b.createdAt,
+    )[0] ?? null
+  );
 };
 
 export const useScheduleById = (id: string) => {
