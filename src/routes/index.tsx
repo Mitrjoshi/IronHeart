@@ -11,11 +11,12 @@ import { WeeklyGraph } from "@/components/WeeklyGraph";
 import { useActiveSessions } from "@/hooks/store/activeSession";
 import { useWorkoutHistory } from "@/hooks/store/workouts";
 import { useDailyTotals, useMealsForDay } from "@/hooks/store/food";
-import { Check, ChevronRight, Clock } from "lucide-react";
+import { CalendarCheck, Check, ChevronRight, Clock } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { store } from "@/store/schema";
 import { useNutritionTargets } from "@/hooks/store/weight";
 import { redirect } from "@tanstack/react-router";
+import { useMondayLogReminder } from "@/hooks/store/reminder";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -65,6 +66,54 @@ function SectionLabel({
           {linkLabel} <ChevronRight size={13} />
         </button>
       )}
+    </div>
+  );
+}
+
+function MondayCheckIn() {
+  const navigate = Route.useNavigate();
+  const reminder = useMondayLogReminder();
+
+  if (!reminder.show) return null;
+
+  return (
+    <div
+      style={{
+        ...S.card,
+        border: "1px solid rgba(245,158,11,0.3)",
+        background: "rgba(245,158,11,0.06)",
+      }}
+      className="space-y-3 p-4"
+    >
+      <div className="flex items-center gap-2">
+        <CalendarCheck size={16} style={{ color: S.amber }} />
+        <p className="text-sm font-semibold">Monday check-in</p>
+      </div>
+      <p className="text-xs" style={{ color: S.muted }}>
+        Start the week with a fresh baseline.
+      </p>
+      <div className="flex flex-col gap-2">
+        {reminder.needsWeight && (
+          <button
+            onClick={() => navigate({ to: "/profile" })}
+            className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            style={{ background: S.amber, color: "#0e0e0e" }}
+          >
+            Log your weight
+            <ChevronRight size={15} />
+          </button>
+        )}
+        {reminder.needsMeasurements && (
+          <button
+            onClick={() => navigate({ to: "/measurements" })}
+            className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            style={{ background: S.surface, color: "#f5f5f5" }}
+          >
+            Log body measurements
+            <ChevronRight size={15} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -123,6 +172,9 @@ function RouteComponent() {
       <Header title="Iron Heart" subtitle="Workout Tracker" />
 
       <div style={S.page} className="space-y-6 px-4 pt-20 pb-8">
+        {/* Monday check-in reminder */}
+        <MondayCheckIn />
+
         {/* Weekly progress */}
         <div className="space-y-3">
           <SectionLabel
