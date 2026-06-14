@@ -175,6 +175,81 @@ function RouteComponent() {
         {/* Monday check-in reminder */}
         <MondayCheckIn />
 
+        {/* Today's workout */}
+        <div className="space-y-3">
+          <SectionLabel label="Today's Workout" />
+          <div style={S.card} className="p-4">
+            {todaySchedule ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="font-semibold">{todaySchedule.name}</p>
+                  {!todaySchedule.isDone && (
+                    <p
+                      className="mt-1 flex items-center gap-1.5 text-xs"
+                      style={{ color: S.muted }}
+                    >
+                      <span>{todaySchedule.exerciseCount} exercises</span>
+                      <span style={{ color: S.mutedDark }}>·</span>
+                      <span>{todaySchedule.totalSets} sets</span>
+                      {todaySchedule.totalReps > 0 && (
+                        <>
+                          <span style={{ color: S.mutedDark }}>·</span>
+                          <span>{todaySchedule.totalReps} reps</span>
+                        </>
+                      )}
+                      {todaySchedule.totalDuration > 0 && (
+                        <>
+                          <span style={{ color: S.mutedDark }}>·</span>
+                          <span>
+                            {formatDuration(todaySchedule.totalDuration)}
+                          </span>
+                        </>
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {todaySchedule.isDone ? (
+                  <div className="space-y-1 py-4 text-center">
+                    <p className="text-4xl">🏆</p>
+                    <p className="font-semibold">Crushed it!</p>
+                    <p className="text-sm" style={{ color: S.muted }}>
+                      You've completed today's workout. Rest up and come back
+                      stronger.
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    className="w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
+                    style={{ background: S.amber, color: "#0e0e0e" }}
+                    onClick={() =>
+                      navigate({
+                        to: "/schedule/$scheduleId/start",
+                        params: { scheduleId: todaySchedule.id },
+                      })
+                    }
+                  >
+                    Start Workout
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 text-center">
+                <p className="text-sm" style={{ color: S.muted }}>
+                  No workout scheduled for today.
+                </p>
+                <button
+                  className="w-full rounded-xl py-2.5 text-sm font-semibold"
+                  style={{ background: S.surface, color: "#f5f5f5" }}
+                  onClick={() => navigate({ to: "/schedule/create" })}
+                >
+                  Create Schedule
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Weekly progress */}
         <div className="space-y-3">
           <SectionLabel
@@ -318,81 +393,6 @@ function RouteComponent() {
             </button>
           </div>
         ))}
-
-        {/* Today's workout */}
-        <div className="space-y-3">
-          <SectionLabel label="Today's Workout" />
-          <div style={S.card} className="p-4">
-            {todaySchedule ? (
-              <div className="space-y-3">
-                <div>
-                  <p className="font-semibold">{todaySchedule.name}</p>
-                  {!todaySchedule.isDone && (
-                    <p
-                      className="mt-1 flex items-center gap-1.5 text-xs"
-                      style={{ color: S.muted }}
-                    >
-                      <span>{todaySchedule.exerciseCount} exercises</span>
-                      <span style={{ color: S.mutedDark }}>·</span>
-                      <span>{todaySchedule.totalSets} sets</span>
-                      {todaySchedule.totalReps > 0 && (
-                        <>
-                          <span style={{ color: S.mutedDark }}>·</span>
-                          <span>{todaySchedule.totalReps} reps</span>
-                        </>
-                      )}
-                      {todaySchedule.totalDuration > 0 && (
-                        <>
-                          <span style={{ color: S.mutedDark }}>·</span>
-                          <span>
-                            {formatDuration(todaySchedule.totalDuration)}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                  )}
-                </div>
-
-                {todaySchedule.isDone ? (
-                  <div className="space-y-1 py-4 text-center">
-                    <p className="text-4xl">🏆</p>
-                    <p className="font-semibold">Crushed it!</p>
-                    <p className="text-sm" style={{ color: S.muted }}>
-                      You've completed today's workout. Rest up and come back
-                      stronger.
-                    </p>
-                  </div>
-                ) : (
-                  <button
-                    className="w-full rounded-xl py-2.5 text-sm font-semibold transition-colors"
-                    style={{ background: S.amber, color: "#0e0e0e" }}
-                    onClick={() =>
-                      navigate({
-                        to: "/schedule/$scheduleId/start",
-                        params: { scheduleId: todaySchedule.id },
-                      })
-                    }
-                  >
-                    Start Workout
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3 text-center">
-                <p className="text-sm" style={{ color: S.muted }}>
-                  No workout scheduled for today.
-                </p>
-                <button
-                  className="w-full rounded-xl py-2.5 text-sm font-semibold"
-                  style={{ background: S.surface, color: "#f5f5f5" }}
-                  onClick={() => navigate({ to: "/schedule/create" })}
-                >
-                  Create Schedule
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
 
         <hr style={S.divider} />
 
