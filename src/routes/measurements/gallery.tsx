@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Header } from "@/components/Header";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -917,6 +918,9 @@ function RouteComponent() {
             <video
               ref={videoRef}
               autoPlay
+              style={{
+                transform: facing === "user" ? "scaleX(-1)" : "none",
+              }}
               playsInline
               muted
               className="absolute inset-0 h-full w-full object-cover"
