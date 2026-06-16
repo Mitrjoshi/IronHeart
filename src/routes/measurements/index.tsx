@@ -13,8 +13,8 @@ import {
   useLogMeasurement,
   useMeasurementsByGroup,
 } from "@/hooks/store/measurements";
-import { createFileRoute } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Image, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
@@ -232,7 +232,20 @@ function RouteComponent() {
 
   return (
     <AppLayout>
-      <Header title="Measurements" subtitle="Track your body measurements" />
+      <Header
+        title="Measurements"
+        subtitle="Track your body measurements"
+        right={
+          <Link to="/measurements/gallery">
+            <button
+              className="rounded-xl p-2 transition-colors"
+              style={{ background: S.surface, color: S.muted }}
+            >
+              <Image size={14} />
+            </button>
+          </Link>
+        }
+      />
       <div style={S.page} className="min-h-screen space-y-3 px-4 pt-20 pb-8">
         {MEASUREMENT_GROUPS.map((group) => (
           <GroupSection

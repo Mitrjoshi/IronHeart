@@ -19,6 +19,7 @@ import { Route as HistoryIndexRouteImport } from './routes/history/index'
 import { Route as FoodIndexRouteImport } from './routes/food/index'
 import { Route as ScheduleCreateRouteImport } from './routes/schedule/create'
 import { Route as ProfileSettingsRouteImport } from './routes/profile/settings'
+import { Route as MeasurementsGalleryRouteImport } from './routes/measurements/gallery'
 import { Route as HistoryIdRouteImport } from './routes/history/$id'
 import { Route as FoodLoggedRouteImport } from './routes/food/logged'
 import { Route as FoodAddRouteImport } from './routes/food/add'
@@ -80,6 +81,11 @@ const ProfileSettingsRoute = ProfileSettingsRouteImport.update({
   path: '/profile/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MeasurementsGalleryRoute = MeasurementsGalleryRouteImport.update({
+  id: '/measurements/gallery',
+  path: '/measurements/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryIdRoute = HistoryIdRouteImport.update({
   id: '/history/$id',
   path: '/history/$id',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/measurements/gallery': typeof MeasurementsGalleryRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/measurements/gallery': typeof MeasurementsGalleryRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food': typeof FoodIndexRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/food/add': typeof FoodAddRoute
   '/food/logged': typeof FoodLoggedRoute
   '/history/$id': typeof HistoryIdRoute
+  '/measurements/gallery': typeof MeasurementsGalleryRoute
   '/profile/settings': typeof ProfileSettingsRoute
   '/schedule/create': typeof ScheduleCreateRoute
   '/food/': typeof FoodIndexRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/measurements/gallery'
     | '/profile/settings'
     | '/schedule/create'
     | '/food/'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/measurements/gallery'
     | '/profile/settings'
     | '/schedule/create'
     | '/food'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/food/add'
     | '/food/logged'
     | '/history/$id'
+    | '/measurements/gallery'
     | '/profile/settings'
     | '/schedule/create'
     | '/food/'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   FoodAddRoute: typeof FoodAddRoute
   FoodLoggedRoute: typeof FoodLoggedRoute
   HistoryIdRoute: typeof HistoryIdRoute
+  MeasurementsGalleryRoute: typeof MeasurementsGalleryRoute
   ProfileSettingsRoute: typeof ProfileSettingsRoute
   ScheduleCreateRoute: typeof ScheduleCreateRoute
   FoodIndexRoute: typeof FoodIndexRoute
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/measurements/gallery': {
+      id: '/measurements/gallery'
+      path: '/measurements/gallery'
+      fullPath: '/measurements/gallery'
+      preLoaderRoute: typeof MeasurementsGalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history/$id': {
       id: '/history/$id'
       path: '/history/$id'
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   FoodAddRoute: FoodAddRoute,
   FoodLoggedRoute: FoodLoggedRoute,
   HistoryIdRoute: HistoryIdRoute,
+  MeasurementsGalleryRoute: MeasurementsGalleryRoute,
   ProfileSettingsRoute: ProfileSettingsRoute,
   ScheduleCreateRoute: ScheduleCreateRoute,
   FoodIndexRoute: FoodIndexRoute,

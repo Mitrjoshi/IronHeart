@@ -112,6 +112,10 @@ store.setTablesSchema({
     createdAt: { type: "number" },
     per_amount: { type: "number" }, // e.g. 100
   },
+  photos: {
+    loggedAt: { type: "number" },
+    note: { type: "string" },
+  },
 });
 
 const persister = createLocalPersister(store, "schedule-store");
