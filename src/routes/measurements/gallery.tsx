@@ -379,6 +379,12 @@ function RouteComponent() {
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("no canvas context");
+
+      if (facing === "user") {
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+      }
+
       ctx.drawImage(video, 0, 0, w, h);
       const blob: Blob | null = await new Promise((res) =>
         canvas.toBlob((b) => res(b), "image/jpeg", 0.82),
