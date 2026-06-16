@@ -823,8 +823,8 @@ function RouteComponent() {
                       e.stopPropagation();
                       showNewer();
                     }}
-                    className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full p-2"
-                    style={{ background: "rgba(255,255,255,0.08)" }}
+                    className="absolute top-1/2 left-8 -translate-y-1/2 rounded-full p-2"
+                    style={{ background: "rgba(0,0,0,0.45)" }}
                   >
                     <ChevronLeft size={22} color="#f5f5f5" />
                   </button>
@@ -835,8 +835,8 @@ function RouteComponent() {
                       e.stopPropagation();
                       showOlder();
                     }}
-                    className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-2"
-                    style={{ background: "rgba(255,255,255,0.08)" }}
+                    className="absolute top-1/2 right-8 -translate-y-1/2 rounded-full p-2"
+                    style={{ background: "rgba(0,0,0,0.45)" }}
                   >
                     <ChevronRight size={22} color="#f5f5f5" />
                   </button>
