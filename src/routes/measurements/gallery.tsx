@@ -232,6 +232,9 @@ function RouteComponent() {
   const sliderRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
   const [adding, setAdding] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -242,6 +245,8 @@ function RouteComponent() {
   const [ghostOpacity, setGhostOpacity] = useState(0.35);
   const [sliderPos, setSliderPos] = useState(50);
   const [exporting, setExporting] = useState(false);
+
+  const viewerIndex = viewerId ? ids.indexOf(viewerId) : -1;
 
   // before (older) / after (newer)
   const pair = useMemo(() => {
@@ -424,7 +429,7 @@ function RouteComponent() {
             : [s[1], id],
       );
     } else {
-      setViewerId(id);
+      openViewer(id);
     }
   };
 
@@ -534,7 +539,62 @@ function RouteComponent() {
     }
   };
 
-  const viewerIndex = viewerId ? ids.indexOf(viewerId) : -1;
+  const openViewer = (id: string) => {
+    window.history.pushState({ galleryViewer: true }, "", window.location.href);
+
+    setViewerId(id);
+  };
+
+  const closeViewer = () => {
+    setViewerId(null);
+  };
+
+  const showOlder = () => {
+    if (viewerIndex < ids.length - 1) {
+      setViewerId(ids[viewerIndex + 1]);
+    }
+  };
+
+  const showNewer = () => {
+    if (viewerIndex > 0) {
+      setViewerId(ids[viewerIndex - 1]);
+    }
+  };
+
+  const openCamera = () => {
+    history.pushState({ camera: true }, "");
+    setCaptureOpen(true);
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (viewerId) {
+        setViewerId(null);
+        return;
+      }
+
+      if (captureOpen) {
+        setCaptureOpen(false);
+        return;
+      }
+
+      if (confirmId) {
+        setConfirmId(null);
+        return;
+      }
+
+      if (sel.length === 2) {
+        setSel([]);
+        return;
+      }
+    };
+
+    window.addEventListener("popstate", onPopState);
+
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+    };
+  }, [viewerId, captureOpen, confirmId, sel]);
 
   return (
     <>
@@ -572,7 +632,7 @@ function RouteComponent() {
             </div>
             <div className="mt-1 flex w-full gap-2">
               <button
-                onClick={() => setCaptureOpen(true)}
+                onClick={openCamera}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold active:opacity-80"
                 style={{ background: S.amber, color: "#0e0e0e" }}
               >
@@ -717,8 +777,37 @@ function RouteComponent() {
                 </button>
               </div>
               <div
-                className="relative flex flex-1 items-center justify-center px-2"
-                onClick={() => setViewerId(null)}
+                className="relative flex flex-1 items-center justify-center overflow-hidden px-2"
+                onClick={closeViewer}
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX;
+                  touchStartY.current = e.touches[0].clientY;
+                }}
+                onTouchEnd={(e) => {
+                  if (
+                    touchStartX.current === null ||
+                    touchStartY.current === null
+                  ) {
+                    return;
+                  }
+
+                  const dx = e.changedTouches[0].clientX - touchStartX.current;
+
+                  const dy = e.changedTouches[0].clientY - touchStartY.current;
+
+                  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                    if (dx < 0) {
+                      // swipe LEFT -> OLDER photo
+                      showOlder();
+                    } else {
+                      // swipe RIGHT -> NEWER photo
+                      showNewer();
+                    }
+                  }
+
+                  touchStartX.current = null;
+                  touchStartY.current = null;
+                }}
               >
                 {urls[vid] && (
                   <img
@@ -728,11 +817,11 @@ function RouteComponent() {
                     onClick={(e) => e.stopPropagation()}
                   />
                 )}
-                {viewerIndex < ids.length - 1 && (
+                {viewerIndex > 0 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setViewerId(ids[viewerIndex + 1]);
+                      showNewer();
                     }}
                     className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full p-2"
                     style={{ background: "rgba(255,255,255,0.08)" }}
@@ -740,11 +829,11 @@ function RouteComponent() {
                     <ChevronLeft size={22} color="#f5f5f5" />
                   </button>
                 )}
-                {viewerIndex > 0 && (
+                {viewerIndex < ids.length - 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setViewerId(ids[viewerIndex - 1]);
+                      showOlder();
                     }}
                     className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-2"
                     style={{ background: "rgba(255,255,255,0.08)" }}
