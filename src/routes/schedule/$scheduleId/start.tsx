@@ -11,7 +11,7 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { Check, Minus, Plus, SquareArrowRightExit, Trash } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   useClearSession,
   useLoadSession,
@@ -27,6 +27,12 @@ export const Route = createFileRoute("/schedule/$scheduleId/start")({
 type SetEntry = { reps: string; weight: string; duration: string };
 type ExerciseSets = Record<string, SetEntry[]>;
 const emptySet = (): SetEntry => ({ reps: "", weight: "", duration: "" });
+
+type CSSVars = CSSProperties & Record<`--${string}`, string | number>;
+
+interface CountdownProps {
+  onComplete: () => void;
+}
 
 const S = {
   page: { background: "#0e0e0e", color: "#f5f5f5" },
@@ -50,6 +56,10 @@ const S = {
   surface: "#1f1f1f",
   red: "#ef4444",
   redSurface: "#2a1515",
+  bg: "#0a0a0a",
+  gold: "#fbbf24",
+  cream: "#fde68a",
+  terra: "#e07a5f",
 };
 
 function SmallInput({
@@ -100,9 +110,10 @@ function SetHeader({ type }: { type: string }) {
   );
 }
 
-function Countdown({ onComplete }: { onComplete: () => void }) {
+export function Countdown({ onComplete }: CountdownProps) {
   // 3 → 2 → 1 → 0(GO) → done
   const [count, setCount] = useState(3);
+  const [outgoing, setOutgoing] = useState<number | null>(null); // digit currently leaving
   const isGo = count === 0;
 
   useEffect(() => {
@@ -110,94 +121,261 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
       onComplete();
       return;
     }
-    // numbers hold for 1s, the GO flash is a touch quicker
-    const t = setTimeout(() => setCount((c) => c - 1), isGo ? 650 : 1000);
+    const dur = isGo ? 1100 : 1000;
+    const t = setTimeout(() => {
+      setOutgoing(count);
+      setCount((c) => c - 1);
+    }, dur);
     return () => clearTimeout(t);
   }, [count]);
 
-  const R = 140; // ring radius
+  if (count < 0) return null; // avoid flashing "-1" before unmount
+
+  const R = 140; // progress-ring radius
   const C = 2 * Math.PI * R;
+
+  // GO ray-burst + particle config
+  const rays = Array.from({ length: 14 }, (_, i) => ({
+    a: (i * 360) / 14,
+    c: i % 2 ? S.gold : S.amber,
+    delay: (i % 4) * 0.02,
+  }));
+  const palette = [S.amber, S.gold, S.cream, S.terra];
+  const particles = Array.from({ length: 22 }, (_, i) => ({
+    a: (i * 360) / 22,
+    d: 130 + (i % 5) * 38,
+    s: 5 + (i % 4) * 3,
+    c: palette[i % palette.length],
+    delay: (i % 6) * 0.025,
+  }));
+
+  // shared digit treatment (warm vertical gradient + layered glow)
+  const digitBase: CSSProperties = {
+    backgroundImage: `linear-gradient(180deg, ${S.cream} 0%, ${S.gold} 45%, ${S.amber} 100%)`,
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    color: "transparent",
+    filter:
+      "drop-shadow(0 0 32px rgba(245,158,11,0.55)) drop-shadow(0 6px 18px rgba(0,0,0,0.5))",
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
-      style={{ background: "#0e0e0e" }}
+      style={{ background: S.bg }}
     >
       <style>{`
-        @keyframes cd-pop {
-          0%   { transform: scale(0.25); opacity: 0; filter: blur(26px); }
-          45%  { transform: scale(1.14); opacity: 1; filter: blur(0); }
-          62%  { transform: scale(0.95); }
-          78%  { transform: scale(1.03); }
-          100% { transform: scale(1);   opacity: 1; filter: blur(0); }
+        /* digit SLAMS in from "close to camera", undershoots on impact, settles */
+        @keyframes cd-enter {
+          0%   { transform: scale(1.85); opacity: 0; filter: blur(22px); }
+          16%  { opacity: 1; }
+          38%  { transform: scale(0.84); filter: blur(0); }
+          56%  { transform: scale(1.09); }
+          72%  { transform: scale(0.96); }
+          86%  { transform: scale(1.03); }
+          100% { transform: scale(1);    opacity: 1; filter: blur(0); }
+        }
+        /* old digit recedes + blurs away while the new one arrives */
+        @keyframes cd-exit {
+          0%   { transform: scale(1);   opacity: 1; filter: blur(0); }
+          100% { transform: scale(0.4); opacity: 0; filter: blur(14px); }
+        }
+        /* short camera shake fired on the impact frame */
+        @keyframes cd-shake {
+          0%   { transform: translate3d(0,0,0); }
+          15%  { transform: translate3d(-4px,3px,0); }
+          30%  { transform: translate3d(5px,-3px,0); }
+          45%  { transform: translate3d(-4px,-2px,0); }
+          60%  { transform: translate3d(3px,3px,0); }
+          75%  { transform: translate3d(-2px,1px,0); }
+          100% { transform: translate3d(0,0,0); }
+        }
+        /* warm radial bloom that flares as the digit lands */
+        @keyframes cd-bloom {
+          0%   { transform: scale(0.4); opacity: 0; }
+          25%  { opacity: 0.5; }
+          100% { transform: scale(1.9); opacity: 0; }
         }
         @keyframes cd-shock {
-          0%   { transform: scale(0.45); opacity: 0.55; }
-          100% { transform: scale(2.6);  opacity: 0; }
+          0%   { transform: scale(0.5); opacity: 0.6; }
+          100% { transform: scale(2.9); opacity: 0; }
         }
-        @keyframes cd-ring {
-          from { stroke-dashoffset: 0; }
-          to   { stroke-dashoffset: ${C}; }
+        @keyframes cd-ring  { from { stroke-dashoffset: 0; } to { stroke-dashoffset: ${C}; } }
+        @keyframes cd-spin  { to { transform: rotate(360deg); } }
+        @keyframes cd-rspin { to { transform: rotate(-360deg); } }
+        @keyframes cd-dot   { to { transform: rotate(360deg); } }
+        @keyframes cd-breathe {
+          0%,100% { opacity: 0.82; transform: scale(1); }
+          50%     { opacity: 1;    transform: scale(1.05); }
         }
-        @keyframes cd-spin { to { transform: rotate(360deg); } }
         @keyframes cd-go {
-          0%   { transform: scale(0.4);  opacity: 0; letter-spacing: -0.08em; }
-          45%  { transform: scale(1.18); opacity: 1; letter-spacing: 0.06em; }
-          100% { transform: scale(1.05); opacity: 1; letter-spacing: 0.04em; }
+          0%   { transform: scale(2.5); opacity: 0; filter: blur(18px); letter-spacing: 0.45em; }
+          28%  { opacity: 1; }
+          48%  { transform: scale(0.9);  filter: blur(0); letter-spacing: 0.01em; }
+          66%  { transform: scale(1.1); }
+          84%  { transform: scale(0.99); }
+          100% { transform: scale(1.04); opacity: 1; letter-spacing: 0.04em; }
         }
         @keyframes cd-flash {
           0%   { opacity: 0; }
-          30%  { opacity: 0.18; }
+          10%  { opacity: 0.6; }
           100% { opacity: 0; }
         }
+        @keyframes cd-goring {
+          0%   { transform: scale(0.2); opacity: 0.9; }
+          100% { transform: scale(3.6); opacity: 0; }
+        }
+        @keyframes cd-ray {
+          0%   { transform: rotate(var(--a)) translateY(-46px)  scaleY(0.2); opacity: 0; }
+          25%  { opacity: 1; }
+          100% { transform: rotate(var(--a)) translateY(-300px) scaleY(1);   opacity: 0; }
+        }
+        @keyframes cd-particle {
+          0%   { transform: rotate(var(--a)) translateY(0) scale(1); opacity: 1; }
+          20%  { opacity: 1; }
+          100% { transform: rotate(var(--a)) translateY(calc(var(--d) * -1px)) scale(0.2); opacity: 0; }
+        }
         @keyframes cd-label {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+          to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cd-stage { animation: none !important; }
         }
       `}</style>
 
-      {/* soft radial glow */}
+      {/* breathing radial glow + vignette */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at 50% 45%, rgba(245,158,11,0.14), transparent 55%)",
+            "radial-gradient(circle at 50% 46%, rgba(245,158,11,0.18), rgba(224,122,95,0.06) 40%, transparent 56%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,0.78))",
+          animation: "cd-breathe 2s ease-in-out infinite",
         }}
       />
 
-      {/* GO flash overlay */}
+      {/* calm ambient counter-rotating dashed rings (sit behind, never restart) */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <svg
+          width="380"
+          height="380"
+          viewBox="0 0 380 380"
+          className="absolute"
+          style={{ animation: "cd-spin 22s linear infinite" }}
+        >
+          <circle
+            cx="190"
+            cy="190"
+            r="186"
+            fill="none"
+            stroke="#1d1a16"
+            strokeWidth="2"
+            strokeDasharray="2 18"
+            strokeLinecap="round"
+          />
+        </svg>
+        <svg
+          width="320"
+          height="320"
+          viewBox="0 0 320 320"
+          className="absolute"
+          style={{ animation: "cd-rspin 30s linear infinite" }}
+        >
+          <circle
+            cx="160"
+            cy="160"
+            r="150"
+            fill="none"
+            stroke="#171410"
+            strokeWidth="1.5"
+            strokeDasharray="1 24"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+
+      {/* ---------- GO climax effects ---------- */}
       {isGo && (
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background: "#f59e0b",
-            animation: "cd-flash 0.65s ease-out",
+            background: `radial-gradient(circle at 50% 50%, #fff6e0, ${S.amber} 35%, transparent 72%)`,
+            animation: "cd-flash 0.9s ease-out forwards",
           }}
         />
       )}
 
-      <div className="relative flex items-center justify-center">
-        {/* slow-spinning dashed outer ring */}
-        <svg
-          width="340"
-          height="340"
-          viewBox="0 0 340 340"
-          className="absolute"
-          style={{ animation: "cd-spin 8s linear infinite" }}
-        >
-          <circle
-            cx="170"
-            cy="170"
-            r="166"
-            fill="none"
-            stroke="#1f1f1f"
-            strokeWidth="2"
-            strokeDasharray="2 14"
-            strokeLinecap="round"
+      {isGo &&
+        rays.map((r, i) => (
+          <span
+            key={`ray-${i}`}
+            className="pointer-events-none absolute origin-bottom rounded-full"
+            style={
+              {
+                width: 3,
+                height: 130,
+                background: `linear-gradient(to top, ${r.c}, rgba(245,158,11,0))`,
+                "--a": `${r.a}deg`,
+                animation: `cd-ray 0.85s ${r.delay}s cubic-bezier(0.2,0.8,0.2,1) forwards`,
+              } as CSSVars
+            }
           />
-        </svg>
+        ))}
 
-        {/* per-second depleting progress ring (hidden during GO) */}
+      {isGo &&
+        particles.map((p, i) => (
+          <span
+            key={`p-${i}`}
+            className="pointer-events-none absolute rounded-full"
+            style={
+              {
+                width: p.s,
+                height: p.s,
+                background: p.c,
+                boxShadow: `0 0 8px ${p.c}`,
+                "--a": `${p.a}deg`,
+                "--d": p.d,
+                animation: `cd-particle 0.8s ${p.delay}s cubic-bezier(0.15,0.7,0.2,1) forwards`,
+              } as CSSVars
+            }
+          />
+        ))}
+
+      {isGo &&
+        [0, 0.1, 0.2].map((delay, i) => (
+          <div
+            key={`gr-${i}`}
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              width: 220,
+              height: 220,
+              border: `2px solid ${S.amber}`,
+              animation: `cd-goring 0.9s ${delay}s ease-out forwards`,
+            }}
+          />
+        ))}
+
+      {/* ---------- per-tick stage (keyed so it replays; shakes on impact) ---------- */}
+      <div
+        key={`stage-${count}`}
+        className="cd-stage relative flex items-center justify-center"
+        style={{ animation: "cd-shake 0.5s 0.30s ease-out" }}
+      >
+        {/* impact bloom */}
+        {!isGo && (
+          <div
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              width: 360,
+              height: 360,
+              background:
+                "radial-gradient(circle, rgba(245,158,11,0.5), transparent 65%)",
+              animation: "cd-bloom 0.75s 0.28s ease-out forwards",
+            }}
+          />
+        )}
+
+        {/* per-second progress ring + orbiting comet */}
         {!isGo && (
           <svg
             width="320"
@@ -210,54 +388,90 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
               cy="160"
               r={R}
               fill="none"
-              stroke="#1f1f1f"
+              stroke="#1f1c18"
               strokeWidth="4"
             />
             <circle
-              key={count}
               cx="160"
               cy="160"
               r={R}
               fill="none"
-              stroke="#f59e0b"
+              stroke={S.amber}
               strokeWidth="4"
               strokeLinecap="round"
               strokeDasharray={C}
-              style={{ animation: "cd-ring 1s linear forwards" }}
+              style={{
+                animation: "cd-ring 1s linear forwards",
+                filter: "drop-shadow(0 0 7px rgba(245,158,11,0.8))",
+              }}
             />
+            <g
+              style={{
+                transformOrigin: "160px 160px",
+                animation: "cd-dot 1s linear forwards",
+              }}
+            >
+              <circle
+                cx="160"
+                cy={160 - R}
+                r="8"
+                fill={S.gold}
+                style={{ filter: "drop-shadow(0 0 12px rgba(251,191,36,1))" }}
+              />
+            </g>
           </svg>
         )}
 
-        {/* shockwave pulse behind each digit */}
-        <div
-          key={`shock-${count}`}
-          className="absolute h-48 w-48 rounded-full"
-          style={{
-            border: "2px solid #f59e0b",
-            animation: "cd-shock 1s ease-out forwards",
-          }}
-        />
+        {/* triple staggered shockwaves, timed to impact */}
+        {!isGo &&
+          [0, 0.12, 0.24].map((delay, i) => (
+            <div
+              key={`shock-${i}`}
+              className="absolute rounded-full"
+              style={{
+                width: 210,
+                height: 210,
+                border: "2px solid rgba(245,158,11,0.75)",
+                animation: `cd-shock 1.05s ${0.28 + delay}s ease-out forwards`,
+              }}
+            />
+          ))}
 
-        {/* the digit / GO */}
+        {/* outgoing digit (recedes away) */}
+        {outgoing != null && outgoing > 0 && (
+          <p
+            className="absolute leading-none font-black tabular-nums"
+            style={{
+              ...digitBase,
+              fontSize: "min(32vw, 44vh)",
+              animation: "cd-exit 0.5s ease-in forwards",
+            }}
+          >
+            {outgoing}
+          </p>
+        )}
+
+        {/* current digit / GO */}
         {isGo ? (
           <p
             className="leading-none font-black"
             style={{
-              fontSize: "26vw",
-              color: "#f59e0b",
-              animation: "cd-go 0.5s cubic-bezier(0.22,1,0.36,1) forwards",
+              ...digitBase,
+              fontSize: "min(25vw, 34vh)",
+              filter:
+                "drop-shadow(0 0 36px rgba(245,158,11,0.7)) drop-shadow(0 6px 20px rgba(0,0,0,0.5))",
+              animation: "cd-go 0.7s cubic-bezier(0.22,1,0.36,1) forwards",
             }}
           >
             GO
           </p>
         ) : (
           <p
-            key={count}
-            className="leading-none font-black tabular-nums"
+            className="relative leading-none font-black tabular-nums"
             style={{
-              fontSize: "34vw",
-              color: "#f59e0b",
-              animation: "cd-pop 1s cubic-bezier(0.34,1.56,0.64,1) forwards",
+              ...digitBase,
+              fontSize: "min(32vw, 44vh)",
+              animation: "cd-enter 1s ease-out forwards",
             }}
           >
             {count}
@@ -267,10 +481,14 @@ function Countdown({ onComplete }: { onComplete: () => void }) {
 
       {/* label */}
       <p
-        className="absolute bottom-[18%] text-sm font-semibold tracking-[0.3em] uppercase"
+        key={`label-${isGo}`}
+        className="absolute text-sm font-semibold uppercase"
         style={{
+          bottom: "15%",
+          letterSpacing: "0.38em",
           color: isGo ? S.amber : S.muted,
-          animation: "cd-label 0.5s ease-out",
+          textShadow: isGo ? "0 0 18px rgba(245,158,11,0.6)" : "none",
+          animation: "cd-label 0.55s ease-out",
         }}
       >
         {isGo ? "Let's Go" : "Get Ready"}
