@@ -1,9 +1,16 @@
 import { Header } from "@/components/Header";
-import { useExercisesBySchedule } from "@/hooks/store/excercise";
+import {
+  useDeleteExercise,
+  useExercisesBySchedule,
+} from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
 import { useFinishWorkout, useStartWorkout } from "@/hooks/store/workouts";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { Minus, Plus, SquareArrowRightExit } from "lucide-react";
+import {
+  createFileRoute,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
+import { Check, Minus, Plus, SquareArrowRightExit, Trash } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   useClearSession,
@@ -38,6 +45,8 @@ const S = {
   muted: "#737373",
   mutedDark: "#404040",
   amber: "#f59e0b",
+  amberSoft: "rgba(245, 158, 11, 0.1)",
+  amberBorder: "rgba(245, 158, 11, 0.35)",
   surface: "#1f1f1f",
   red: "#ef4444",
   redSurface: "#2a1515",
@@ -58,9 +67,36 @@ function SmallInput({
       type="number"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full min-w-0 px-3 py-2 text-sm transition-colors outline-none placeholder:text-[#404040] focus:border-amber-500"
+      className="w-full min-w-0 px-3 py-2 text-center text-sm transition-colors outline-none placeholder:text-[#404040] focus:border-amber-500"
       style={S.input}
     />
+  );
+}
+
+// Small column labels shown above the set rows, varies by exercise type
+function SetHeader({ type }: { type: string }) {
+  const Label = ({ children }: { children: React.ReactNode }) => (
+    <p
+      className="w-full text-center text-[10px] font-semibold tracking-wider uppercase"
+      style={{ color: S.mutedDark }}
+    >
+      {children}
+    </p>
+  );
+
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <span className="w-6 shrink-0" />
+      {type === "weighted" && (
+        <>
+          <Label>Reps</Label>
+          <Label>Kg</Label>
+        </>
+      )}
+      {type === "duration" && <Label>Seconds</Label>}
+      {type === "bodyweight" && <Label>Reps</Label>}
+      <span className="w-8 shrink-0" />
+    </div>
   );
 }
 
@@ -156,6 +192,7 @@ function ExitDialog({
 
 function RouteComponent() {
   const router = useRouter();
+  const navigate = useNavigate();
   const scheduleId = Route.useParams().scheduleId;
   const scheduleData = useScheduleById(scheduleId);
   const exercises = useExercisesBySchedule(scheduleId);
@@ -166,6 +203,7 @@ function RouteComponent() {
   const clearSession = useClearSession();
   const savedSession = useLoadSession(scheduleId);
   const isResuming = !!savedSession;
+  const deleteExercise = useDeleteExercise();
 
   const [countdown, setCountdown] = useState(!isResuming);
   const [time, setTime] = useState(savedSession?.elapsedTime ?? 0);
@@ -327,12 +365,26 @@ function RouteComponent() {
     router.history.back();
   };
 
-  const handleSaveAndExit = () => {
+  const handleSaveAndExit = (callback?: () => void) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     if (workoutIdRef.current)
       saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
     setShowExitDialog(false);
     proceed?.();
+    callback?.();
+  };
+
+  // ✅ Add Exercise: save the session and navigate WITHOUT tripping the
+  // blocker — skipBlockerRef bypasses shouldBlockFn so no exit dialog appears.
+  const handleAddExercise = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (workoutIdRef.current)
+      saveSession(scheduleId, workoutIdRef.current, time, exerciseSets);
+    skipBlockerRef.current = true;
+    navigate({
+      to: "/schedule/$scheduleId/excercise",
+      params: { scheduleId },
+    });
   };
 
   const handleDiscard = () => {
@@ -351,6 +403,11 @@ function RouteComponent() {
   const sec = Math.floor((time / 1000) % 60);
   const min = Math.floor((time / (1000 * 60)) % 60);
   const hr = Math.floor(time / (1000 * 60 * 60));
+
+  const totalSets = exercises.reduce(
+    (sum, ex) => sum + (exerciseSets[ex.id]?.length ?? 0),
+    0,
+  );
 
   return (
     <div style={S.page} className="min-h-screen">
@@ -378,59 +435,107 @@ function RouteComponent() {
         }
       />
 
-      {/* Sticky timer */}
+      {/* Sticky timer — hero with live pulse + accent rule */}
       <div className="sticky top-[61px] z-9 px-4 py-3" style={S.sticky}>
-        <div style={S.card} className="space-y-3 p-4">
+        <div
+          style={{
+            ...S.card,
+            borderColor: S.amberBorder,
+            background:
+              "linear-gradient(180deg, rgba(245,158,11,0.05) 0%, #161616 60%)",
+          }}
+          className="overflow-hidden p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2 w-2 animate-pulse rounded-full"
+                style={{ background: S.amber }}
+              />
+              <p
+                className="text-[11px] font-semibold tracking-widest uppercase"
+                style={{ color: S.muted }}
+              >
+                {isResuming ? "Resumed · Recording" : "Recording"}
+              </p>
+            </div>
+            <p
+              className="text-[11px] font-medium"
+              style={{ color: S.mutedDark }}
+            >
+              {exercises.length} exercises · {totalSets} sets
+            </p>
+          </div>
+
           <p
-            className="leading-none font-black tabular-nums"
-            style={{ fontSize: "18vw", color: S.amber }}
+            className="mt-1 leading-none font-black tabular-nums"
+            style={{ fontSize: "17vw", color: S.amber }}
           >
             {pad(hr)}:{pad(min)}:{pad(sec)}
           </p>
+
           <button
             onClick={handleFinish}
-            className="w-full rounded-xl py-2.5 text-sm font-semibold transition-opacity active:opacity-80"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-opacity active:opacity-80"
             style={{ background: S.amber, color: "#0e0e0e" }}
           >
+            <Check size={16} strokeWidth={3} />
             Finish Workout
           </button>
         </div>
       </div>
 
       {/* Exercise cards */}
-      <div className="space-y-3 px-4 pt-18 pb-4">
+      <div className="space-y-3 px-4 pt-20 pb-4">
         {exercises.map((exercise) => (
           <div key={exercise.id} style={S.card} className="space-y-3 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{exercise.name}</p>
-                <p className="mt-0.5 text-xs" style={{ color: S.muted }}>
-                  {exerciseSets[exercise.id]?.length ?? 0} sets
-                  <span style={{ color: S.mutedDark }}> · </span>
-                  <span className="capitalize">{exercise.type}</span>
-                </p>
+            <div className="flex items-start justify-between">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{exercise.name}</p>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span
+                    className="rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase"
+                    style={{ background: S.amberSoft, color: S.amber }}
+                  >
+                    {exercise.type}
+                  </span>
+                  <span className="text-xs" style={{ color: S.muted }}>
+                    {exerciseSets[exercise.id]?.length ?? 0} sets
+                  </span>
+                </div>
               </div>
+              <button
+                onClick={() => deleteExercise(exercise.id)}
+                style={{ background: S.redSurface, color: S.red }}
+                className="shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30"
+              >
+                <Trash size={15} />
+              </button>
             </div>
+
+            {(exerciseSets[exercise.id]?.length ?? 0) > 0 && (
+              <SetHeader type={exercise.type} />
+            )}
 
             <div className="space-y-2">
               {(exerciseSets[exercise.id] ?? []).map((set, i) => (
                 <div key={i} className="space-y-1">
                   <div className="flex w-full min-w-0 items-center gap-2">
-                    <p
-                      className="w-6 shrink-0 text-center text-xs"
-                      style={{ color: S.mutedDark }}
+                    <span
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+                      style={{ background: S.surface, color: S.muted }}
                     >
                       {i + 1}
-                    </p>
+                    </span>
                     {exercise.type === "weighted" && (
                       <>
                         <SmallInput
-                          placeholder="Reps"
+                          placeholder="0"
                           value={set.reps}
                           onChange={(v) => updateSet(exercise.id, i, "reps", v)}
                         />
                         <SmallInput
-                          placeholder="kg"
+                          placeholder="0"
                           value={set.weight}
                           onChange={(v) =>
                             updateSet(exercise.id, i, "weight", v)
@@ -440,7 +545,7 @@ function RouteComponent() {
                     )}
                     {exercise.type === "duration" && (
                       <SmallInput
-                        placeholder="Duration (sec)"
+                        placeholder="0"
                         value={set.duration}
                         onChange={(v) =>
                           updateSet(exercise.id, i, "duration", v)
@@ -449,7 +554,7 @@ function RouteComponent() {
                     )}
                     {exercise.type === "bodyweight" && (
                       <SmallInput
-                        placeholder="Reps"
+                        placeholder="0"
                         value={set.reps}
                         onChange={(v) => updateSet(exercise.id, i, "reps", v)}
                       />
@@ -457,7 +562,7 @@ function RouteComponent() {
                     <button
                       disabled={(exerciseSets[exercise.id]?.length ?? 0) === 1}
                       onClick={() => removeSet(exercise.id, i)}
-                      className="shrink-0 rounded-lg p-2 transition-colors disabled:opacity-30"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-30"
                       style={{ background: S.surface, color: S.muted }}
                     >
                       <Minus size={14} />
@@ -477,12 +582,30 @@ function RouteComponent() {
             <button
               onClick={() => addSet(exercise.id)}
               className="flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-sm transition-colors"
-              style={{ background: S.surface, color: S.muted }}
+              style={{
+                background: "transparent",
+                border: `1px solid ${S.surface}`,
+                color: S.muted,
+              }}
             >
               <Plus size={14} /> Add Set
             </button>
           </div>
         ))}
+
+        {/* Add Exercise — amber-tinted dashed, distinct from Finish */}
+        <button
+          onClick={handleAddExercise}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-semibold transition-colors active:opacity-70"
+          style={{
+            background: S.amberSoft,
+            border: `1px dashed ${S.amberBorder}`,
+            color: S.amber,
+          }}
+        >
+          <Plus size={18} />
+          Add Exercise
+        </button>
       </div>
     </div>
   );
