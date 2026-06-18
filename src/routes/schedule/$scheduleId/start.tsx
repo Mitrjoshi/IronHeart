@@ -101,34 +101,179 @@ function SetHeader({ type }: { type: string }) {
 }
 
 function Countdown({ onComplete }: { onComplete: () => void }) {
+  // 3 → 2 → 1 → 0(GO) → done
   const [count, setCount] = useState(3);
+  const isGo = count === 0;
 
   useEffect(() => {
-    if (count === 0) {
+    if (count < 0) {
       onComplete();
       return;
     }
-    const t = setTimeout(() => setCount((c) => c - 1), 1000);
+    // numbers hold for 1s, the GO flash is a touch quicker
+    const t = setTimeout(() => setCount((c) => c - 1), isGo ? 650 : 1000);
     return () => clearTimeout(t);
   }, [count]);
 
+  const R = 140; // ring radius
+  const C = 2 * Math.PI * R;
+
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
       style={{ background: "#0e0e0e" }}
     >
+      <style>{`
+        @keyframes cd-pop {
+          0%   { transform: scale(0.25); opacity: 0; filter: blur(26px); }
+          45%  { transform: scale(1.14); opacity: 1; filter: blur(0); }
+          62%  { transform: scale(0.95); }
+          78%  { transform: scale(1.03); }
+          100% { transform: scale(1);   opacity: 1; filter: blur(0); }
+        }
+        @keyframes cd-shock {
+          0%   { transform: scale(0.45); opacity: 0.55; }
+          100% { transform: scale(2.6);  opacity: 0; }
+        }
+        @keyframes cd-ring {
+          from { stroke-dashoffset: 0; }
+          to   { stroke-dashoffset: ${C}; }
+        }
+        @keyframes cd-spin { to { transform: rotate(360deg); } }
+        @keyframes cd-go {
+          0%   { transform: scale(0.4);  opacity: 0; letter-spacing: -0.08em; }
+          45%  { transform: scale(1.18); opacity: 1; letter-spacing: 0.06em; }
+          100% { transform: scale(1.05); opacity: 1; letter-spacing: 0.04em; }
+        }
+        @keyframes cd-flash {
+          0%   { opacity: 0; }
+          30%  { opacity: 0.18; }
+          100% { opacity: 0; }
+        }
+        @keyframes cd-label {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* soft radial glow */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 45%, rgba(245,158,11,0.14), transparent 55%)",
+        }}
+      />
+
+      {/* GO flash overlay */}
+      {isGo && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: "#f59e0b",
+            animation: "cd-flash 0.65s ease-out",
+          }}
+        />
+      )}
+
+      <div className="relative flex items-center justify-center">
+        {/* slow-spinning dashed outer ring */}
+        <svg
+          width="340"
+          height="340"
+          viewBox="0 0 340 340"
+          className="absolute"
+          style={{ animation: "cd-spin 8s linear infinite" }}
+        >
+          <circle
+            cx="170"
+            cy="170"
+            r="166"
+            fill="none"
+            stroke="#1f1f1f"
+            strokeWidth="2"
+            strokeDasharray="2 14"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* per-second depleting progress ring (hidden during GO) */}
+        {!isGo && (
+          <svg
+            width="320"
+            height="320"
+            viewBox="0 0 320 320"
+            className="absolute -rotate-90"
+          >
+            <circle
+              cx="160"
+              cy="160"
+              r={R}
+              fill="none"
+              stroke="#1f1f1f"
+              strokeWidth="4"
+            />
+            <circle
+              key={count}
+              cx="160"
+              cy="160"
+              r={R}
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray={C}
+              style={{ animation: "cd-ring 1s linear forwards" }}
+            />
+          </svg>
+        )}
+
+        {/* shockwave pulse behind each digit */}
+        <div
+          key={`shock-${count}`}
+          className="absolute h-48 w-48 rounded-full"
+          style={{
+            border: "2px solid #f59e0b",
+            animation: "cd-shock 1s ease-out forwards",
+          }}
+        />
+
+        {/* the digit / GO */}
+        {isGo ? (
+          <p
+            className="leading-none font-black"
+            style={{
+              fontSize: "26vw",
+              color: "#f59e0b",
+              animation: "cd-go 0.5s cubic-bezier(0.22,1,0.36,1) forwards",
+            }}
+          >
+            GO
+          </p>
+        ) : (
+          <p
+            key={count}
+            className="leading-none font-black tabular-nums"
+            style={{
+              fontSize: "34vw",
+              color: "#f59e0b",
+              animation: "cd-pop 1s cubic-bezier(0.34,1.56,0.64,1) forwards",
+            }}
+          >
+            {count}
+          </p>
+        )}
+      </div>
+
+      {/* label */}
       <p
-        className="mb-4 text-sm font-semibold tracking-widest uppercase"
-        style={{ color: S.muted }}
+        className="absolute bottom-[18%] text-sm font-semibold tracking-[0.3em] uppercase"
+        style={{
+          color: isGo ? S.amber : S.muted,
+          animation: "cd-label 0.5s ease-out",
+        }}
       >
-        Get Ready
-      </p>
-      <p
-        key={count}
-        className="animate-ping-once leading-none font-black"
-        style={{ fontSize: "50vw", color: S.amber, animationDuration: "0.8s" }}
-      >
-        {count}
+        {isGo ? "Let's Go" : "Get Ready"}
       </p>
     </div>
   );
