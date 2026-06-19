@@ -5,11 +5,7 @@ import {
 } from "@/hooks/store/excercise";
 import { useScheduleById } from "@/hooks/store/schedules";
 import { useFinishWorkout, useStartWorkout } from "@/hooks/store/workouts";
-import {
-  createFileRoute,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Minus, Plus, SquareArrowRightExit, Trash } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
@@ -554,7 +550,6 @@ function ExitDialog({
 }
 
 function RouteComponent() {
-  const router = useRouter();
   const navigate = useNavigate();
   const scheduleId = Route.useParams().scheduleId;
   const scheduleData = useScheduleById(scheduleId);
@@ -725,7 +720,11 @@ function RouteComponent() {
     );
     clearSession(scheduleId);
     skipBlockerRef.current = true;
-    router.history.back();
+    navigate({
+      to: "/schedule/$scheduleId/summary",
+      params: { scheduleId },
+      replace: true,
+    });
   };
 
   const handleSaveAndExit = (callback?: () => void) => {

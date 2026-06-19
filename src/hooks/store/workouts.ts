@@ -220,3 +220,29 @@ export const useWorkoutById = (workoutId: string) => {
     exercises,
   };
 };
+
+export const useDeleteWorkout = () => {
+  return (workoutId: string) => {
+    store.transaction(() => {
+      // 1. all sets belonging to this workout
+      store.getRowIds("workoutSets").forEach((setId) => {
+        if (store.getCell("workoutSets", setId, "workoutId") === workoutId) {
+          store.delRow("workoutSets", setId);
+        }
+      });
+
+      // 2. any active/paused session pointing at it (keyed by scheduleId,
+      //    but references workoutId — would otherwise resume a dead workout)
+      store.getRowIds("activeSessions").forEach((sessionId) => {
+        if (
+          store.getCell("activeSessions", sessionId, "workoutId") === workoutId
+        ) {
+          store.delRow("activeSessions", sessionId);
+        }
+      });
+
+      // 3. the workout row itself
+      store.delRow("workouts", workoutId);
+    });
+  };
+};

@@ -23,7 +23,7 @@ export function Header({
   return (
     <div
       className={cn(
-        "bg-background fixed top-0 right-0 left-0 z-10 flex items-center justify-between border-b p-4 py-2",
+        "bg-background fixed top-0 right-0 left-0 z-10 flex items-center justify-between gap-4 border-b p-4 py-2",
         className,
       )}
     >

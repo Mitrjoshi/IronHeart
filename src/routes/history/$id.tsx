@@ -1,7 +1,8 @@
 import { Header } from "@/components/Header";
-import { useWorkoutById } from "@/hooks/store/workouts";
+import { useDeleteWorkout, useWorkoutById } from "@/hooks/store/workouts";
 import { capitalize, formatDuration, formatVolume } from "@/utils";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Trash } from "lucide-react";
 
 export const Route = createFileRoute("/history/$id")({
   component: RouteComponent,
@@ -18,11 +19,15 @@ const S = {
   mutedDark: "#404040",
   amber: "#f59e0b",
   surface: "#1f1f1f",
+  red: "#ef4444",
+  redSurface: "#2a1515",
 };
 
 function RouteComponent() {
   const { id } = Route.useParams();
   const workout = useWorkoutById(id);
+  const deleteWorkout = useDeleteWorkout();
+  const router = useRouter();
 
   if (!workout) {
     return (
@@ -56,6 +61,18 @@ function RouteComponent() {
         showBack
         title="Workout History"
         subtitle="Detailed view of your workout session"
+        right={
+          <button
+            onClick={() => {
+              deleteWorkout(workout.id);
+              router.history.back();
+            }}
+            className="flex items-center gap-1.5 rounded-xl p-3 text-sm font-semibold transition-colors"
+            style={{ background: S.redSurface, color: S.red }}
+          >
+            <Trash size={15} />
+          </button>
+        }
       />
 
       <div style={S.page} className="space-y-6 px-4 pt-20 pb-8">

@@ -25,6 +25,7 @@ import { Route as FoodLoggedRouteImport } from './routes/food/logged'
 import { Route as FoodAddRouteImport } from './routes/food/add'
 import { Route as ScheduleScheduleIdIndexRouteImport } from './routes/schedule/$scheduleId/index'
 import { Route as FoodFoodIdIndexRouteImport } from './routes/food/$foodId/index'
+import { Route as ScheduleScheduleIdSummaryRouteImport } from './routes/schedule/$scheduleId/summary'
 import { Route as ScheduleScheduleIdStartRouteImport } from './routes/schedule/$scheduleId/start'
 import { Route as ScheduleScheduleIdEditRouteImport } from './routes/schedule/$scheduleId/edit'
 import { Route as ScheduleScheduleIdAiRouteImport } from './routes/schedule/$scheduleId/ai'
@@ -111,6 +112,12 @@ const FoodFoodIdIndexRoute = FoodFoodIdIndexRouteImport.update({
   path: '/food/$foodId/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScheduleScheduleIdSummaryRoute =
+  ScheduleScheduleIdSummaryRouteImport.update({
+    id: '/schedule/$scheduleId/summary',
+    path: '/schedule/$scheduleId/summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ScheduleScheduleIdStartRoute = ScheduleScheduleIdStartRouteImport.update({
   id: '/schedule/$scheduleId/start',
   path: '/schedule/$scheduleId/start',
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/schedule/$scheduleId/ai': typeof ScheduleScheduleIdAiRoute
   '/schedule/$scheduleId/edit': typeof ScheduleScheduleIdEditRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId/summary': typeof ScheduleScheduleIdSummaryRoute
   '/food/$foodId/': typeof FoodFoodIdIndexRoute
   '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/schedule/$scheduleId/ai': typeof ScheduleScheduleIdAiRoute
   '/schedule/$scheduleId/edit': typeof ScheduleScheduleIdEditRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId/summary': typeof ScheduleScheduleIdSummaryRoute
   '/food/$foodId': typeof FoodFoodIdIndexRoute
   '/schedule/$scheduleId': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -204,6 +213,7 @@ export interface FileRoutesById {
   '/schedule/$scheduleId/ai': typeof ScheduleScheduleIdAiRoute
   '/schedule/$scheduleId/edit': typeof ScheduleScheduleIdEditRoute
   '/schedule/$scheduleId/start': typeof ScheduleScheduleIdStartRoute
+  '/schedule/$scheduleId/summary': typeof ScheduleScheduleIdSummaryRoute
   '/food/$foodId/': typeof FoodFoodIdIndexRoute
   '/schedule/$scheduleId/': typeof ScheduleScheduleIdIndexRoute
   '/schedule/$scheduleId/excercise/$excerciseId': typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/schedule/$scheduleId/ai'
     | '/schedule/$scheduleId/edit'
     | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId/summary'
     | '/food/$foodId/'
     | '/schedule/$scheduleId/'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/schedule/$scheduleId/ai'
     | '/schedule/$scheduleId/edit'
     | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId/summary'
     | '/food/$foodId'
     | '/schedule/$scheduleId'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -275,6 +287,7 @@ export interface FileRouteTypes {
     | '/schedule/$scheduleId/ai'
     | '/schedule/$scheduleId/edit'
     | '/schedule/$scheduleId/start'
+    | '/schedule/$scheduleId/summary'
     | '/food/$foodId/'
     | '/schedule/$scheduleId/'
     | '/schedule/$scheduleId/excercise/$excerciseId'
@@ -299,6 +312,7 @@ export interface RootRouteChildren {
   ScheduleScheduleIdAiRoute: typeof ScheduleScheduleIdAiRoute
   ScheduleScheduleIdEditRoute: typeof ScheduleScheduleIdEditRoute
   ScheduleScheduleIdStartRoute: typeof ScheduleScheduleIdStartRoute
+  ScheduleScheduleIdSummaryRoute: typeof ScheduleScheduleIdSummaryRoute
   FoodFoodIdIndexRoute: typeof FoodFoodIdIndexRoute
   ScheduleScheduleIdIndexRoute: typeof ScheduleScheduleIdIndexRoute
   ScheduleScheduleIdExcerciseExcerciseIdRoute: typeof ScheduleScheduleIdExcerciseExcerciseIdRoute
@@ -419,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoodFoodIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedule/$scheduleId/summary': {
+      id: '/schedule/$scheduleId/summary'
+      path: '/schedule/$scheduleId/summary'
+      fullPath: '/schedule/$scheduleId/summary'
+      preLoaderRoute: typeof ScheduleScheduleIdSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schedule/$scheduleId/start': {
       id: '/schedule/$scheduleId/start'
       path: '/schedule/$scheduleId/start'
@@ -475,6 +496,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScheduleScheduleIdAiRoute: ScheduleScheduleIdAiRoute,
   ScheduleScheduleIdEditRoute: ScheduleScheduleIdEditRoute,
   ScheduleScheduleIdStartRoute: ScheduleScheduleIdStartRoute,
+  ScheduleScheduleIdSummaryRoute: ScheduleScheduleIdSummaryRoute,
   FoodFoodIdIndexRoute: FoodFoodIdIndexRoute,
   ScheduleScheduleIdIndexRoute: ScheduleScheduleIdIndexRoute,
   ScheduleScheduleIdExcerciseExcerciseIdRoute:
